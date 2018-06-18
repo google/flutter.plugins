@@ -1,0 +1,24 @@
+name: phone_log
+description: A new flutter plugin project.
+version: 0.0.2
+author: Jiaming Cheng <jiamingc@google.com>
+homepage: https://github.com/jiajiabingcheng/phone_log
+
+environment:
+  sdk: ">=1.19.0 <2.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  fixnum: ^0.10.7
+
+# The following section is specific to Flutter.
+flutter:
+  plugin:
+    androidPackage: com.jiajiabingcheng.phonelog
+    pluginClass: PhoneLogPlugin
+
+dev_dependencies:
+  mockito: ^2.0.2
+  flutter_test:
+    sdk: flutter
