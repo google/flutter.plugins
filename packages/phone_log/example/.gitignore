@@ -1,0 +1,13 @@
+.DS_Store
+.dart_tool/
+.atom/
+.idea
+.packages
+.pub/
+
+build/
+
+.flutter-plugins
+ios/.generated/
+packages
+pubspec.lock
