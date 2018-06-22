@@ -24,7 +24,7 @@ void main() {
     });
 
     when(mockChannelForGetLogs.invokeMethod('getPhoneLogs', any))
-        .thenReturn(new Future(() => [
+        .thenAnswer((_) => new Future(() => [
               {
                 'formattedNumber': '123 123 1234',
                 'number': '1231231234',
