@@ -30,6 +30,13 @@ class PhoneLog {
     return isGranted;
   }
 
+  /// Check if the "never ask" box is checked or not.
+  Future<bool> isNeverAskChecked() async {
+    final bool isChecked =
+    await _channel.invokeMethod("isNeverAskChecked", null);
+    return isChecked;
+  }
+
   ///Fetches phone logs
   ///
   ///The unit of [startDate] is the Milliseconds of date.
@@ -52,6 +59,7 @@ class CallRecord {
     this.callType,
     this.dateYear,
     this.dateMonth,
+    this.dateDay,
     this.dateHour,
     this.dateMinute,
     this.dateSecond,

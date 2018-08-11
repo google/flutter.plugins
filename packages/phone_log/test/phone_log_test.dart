@@ -80,6 +80,15 @@ void main() {
       expect(invokedMethod, 'requestPermission');
       expect(arguments, null);
     });
+
+    test('is "never ask" box checked', () async {
+      var phoneLog = new PhoneLog.private(mockChannel);
+
+      await phoneLog.isNeverAskChecked();
+
+      expect(invokedMethod, 'isNeverAskChecked');
+      expect(arguments, null);
+    });
   });
 }
 

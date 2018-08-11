@@ -61,6 +61,10 @@ public class PhoneLogPlugin implements MethodCallHandler,
                 String duration = call.argument("duration");
                 fetchCallRecords(startDate, duration);
                 break;
+            case "isNeverAskChecked":
+                pendingResult.success(checkIfNeverAsk());
+                pendingResult = null;
+                break;
             default:
                 result.notImplemented();
         }
@@ -76,6 +80,15 @@ public class PhoneLogPlugin implements MethodCallHandler,
         Log.i("PhoneLogPlugin", "Checking permission : " + Manifest.permission.READ_CALL_LOG);
         return PackageManager.PERMISSION_GRANTED
                 == registrar.activity().checkSelfPermission(Manifest.permission.READ_CALL_LOG);
+    }
+
+    private boolean checkIfNeverAsk(){
+        boolean showRationale = registrar.activity().shouldShowRequestPermissionRationale(Manifest.permission.READ_CALL_LOG);
+        if (!showRationale) {
+            // User checed "never ask again" box.
+            return true;
+        }
+        return false;
     }
 
     @Override
