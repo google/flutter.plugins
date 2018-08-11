@@ -85,7 +85,7 @@ public class PhoneLogPlugin implements MethodCallHandler,
     private boolean checkIfNeverAsk(){
         boolean showRationale = registrar.activity().shouldShowRequestPermissionRationale(Manifest.permission.READ_CALL_LOG);
         if (!showRationale) {
-            // User checed "never ask again" box.
+            // User checked "never ask again" box.
             return true;
         }
         return false;
