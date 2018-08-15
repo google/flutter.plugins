@@ -32,14 +32,10 @@ class _MyAppState extends State<MyApp> {
   }
 
   void checkPermission() async {
-    bool res = await phoneLog.checkPermission();
+    PermissionStatus res = await phoneLog.checkPermission();
     print("permission is: " + res.toString());
   }
 
-  void isNeverAskBoxChecked() async {
-    bool res = await phoneLog.isNeverAskChecked();
-    print("never ask is checked: " + res.toString());
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,12 +50,6 @@ class _MyAppState extends State<MyApp> {
         child: new RaisedButton(
             onPressed: requestPermission,
             child: new Text("Request permission")),
-      ),
-      new Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: new RaisedButton(
-            onPressed: isNeverAskBoxChecked,
-            child: new Text("Check box status")),
       ),
       new Padding(
           padding: const EdgeInsets.all(8.0),
