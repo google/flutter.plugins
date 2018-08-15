@@ -12,8 +12,7 @@
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
     if ([@"checkPermission" isEqualToString:call.method] ||
         [@"requestPermission" isEqualToString:call.method] ||
-        [@"getPhoneLogs" isEqualToString:call.method] ||
-        [@"isNeverAskChecked" isEqualToString:call.method]) {
+        [@"getPhoneLogs" isEqualToString:call.method]) {
         result(nil);
     } else {
         result(FlutterMethodNotImplemented);

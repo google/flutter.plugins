@@ -18,9 +18,9 @@ class PhoneLog {
   PhoneLog.private(MethodChannel platformChannel):_channel = platformChannel;
 
   /// Check a [permission] and return a [Future] with the result
-  Future<bool> checkPermission() async {
-    final bool isGranted = await _channel.invokeMethod("checkPermission", null);
-    return isGranted;
+  Future<PermissionStatus> checkPermission() async {
+    final String status = await _channel.invokeMethod("checkPermission", null);
+    return permissionMap[status];
   }
 
   /// Request a [permission] and return a [Future] with the result
@@ -28,13 +28,6 @@ class PhoneLog {
     final bool isGranted =
         await _channel.invokeMethod("requestPermission", null);
     return isGranted;
-  }
-
-  /// Check if the "never ask" box is checked or not.
-  Future<bool> isNeverAskChecked() async {
-    final bool isChecked =
-    await _channel.invokeMethod("isNeverAskChecked", null);
-    return isChecked;
   }
 
   ///Fetches phone logs
@@ -50,6 +43,14 @@ class PhoneLog {
     return records?.map((m) => new CallRecord.fromMap(m));
   }
 }
+
+enum PermissionStatus {granted, denied, deniedAndCannotRequest}
+
+var permissionMap = <String, PermissionStatus>{
+  'granted': PermissionStatus.granted,
+  'denied': PermissionStatus.denied,
+  'deniedAndCannotRequest': PermissionStatus.deniedAndCannotRequest
+};
 
 /// The class that carries all the data for one call history entry.
 class CallRecord {
