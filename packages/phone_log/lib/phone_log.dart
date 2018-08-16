@@ -4,6 +4,14 @@ import 'package:fixnum/fixnum.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+/// [PermissionStatus.granted] means that the permission is already granted.
+/// [PermissionStatus.denied] means that the permission is not granted yet.
+/// [PermissionStatus.deniedAndCannotRequest] means that the permission
+/// request is denied previously and user has checked 'never ask again' check
+/// box. In this case calling [requestPermission] method, the request
+/// permission dialog would not pop up.
+enum PermissionStatus {granted, denied, deniedAndCannotRequest}
+
 /// Provide methods to access and fetch the phone log.
 class PhoneLog {
   final MethodChannel _channel;
@@ -17,13 +25,13 @@ class PhoneLog {
   @visibleForTesting
   PhoneLog.private(MethodChannel platformChannel):_channel = platformChannel;
 
-  /// Check a [permission] and return a [Future] with the result
-  Future<bool> checkPermission() async {
-    final bool isGranted = await _channel.invokeMethod("checkPermission", null);
-    return isGranted;
+  /// Check a [permission] and return a [Future] of the [PermissionStatus].
+  Future<PermissionStatus> checkPermission() async {
+    final String status = await _channel.invokeMethod("checkPermission", null);
+    return permissionMap[status];
   }
 
-  /// Request a [permission] and return a [Future] with the result
+  /// Request a [permission] and return a [Future] of bool.
   Future<bool> requestPermission() async {
     final bool isGranted =
         await _channel.invokeMethod("requestPermission", null);
@@ -44,6 +52,12 @@ class PhoneLog {
   }
 }
 
+var permissionMap = <String, PermissionStatus>{
+  'granted': PermissionStatus.granted,
+  'denied': PermissionStatus.denied,
+  'deniedAndCannotRequest': PermissionStatus.deniedAndCannotRequest
+};
+
 /// The class that carries all the data for one call history entry.
 class CallRecord {
   CallRecord({
@@ -52,6 +66,7 @@ class CallRecord {
     this.callType,
     this.dateYear,
     this.dateMonth,
+    this.dateDay,
     this.dateHour,
     this.dateMinute,
     this.dateSecond,

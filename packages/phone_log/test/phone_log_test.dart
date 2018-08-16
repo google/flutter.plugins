@@ -12,10 +12,16 @@ void main() {
   dynamic arguments;
   MockPlatformChannel mockChannel;
   MockPlatformChannel mockChannelForGetLogs;
+  MockPlatformChannel mockChannelForGranted;
+  MockPlatformChannel mockChannelForDenied;
+  MockPlatformChannel mockChannelForDeniedCannotRequest;
 
   setUp(() {
     mockChannel = new MockPlatformChannel();
     mockChannelForGetLogs = new MockPlatformChannel();
+    mockChannelForGranted = new MockPlatformChannel();
+    mockChannelForDenied = new MockPlatformChannel();
+    mockChannelForDeniedCannotRequest = new MockPlatformChannel();
 
     when(mockChannel.invokeMethod(typed(any), any))
         .thenAnswer((Invocation invocation) {
@@ -38,6 +44,15 @@ void main() {
                 'duration': 123
               }
             ]));
+
+    when(mockChannelForGranted.invokeMethod('checkPermission', any))
+        .thenAnswer((_) => new Future(() => 'granted'));
+
+    when(mockChannelForDenied.invokeMethod('checkPermission', any))
+        .thenAnswer((_) => new Future(() => 'denied'));
+
+    when(mockChannelForDeniedCannotRequest.invokeMethod('checkPermission', any))
+        .thenAnswer((_) => new Future(() => 'deniedAndCannotRequest'));
   });
 
   group('Phone log plugin', () {
@@ -70,6 +85,21 @@ void main() {
 
       expect(invokedMethod, 'checkPermission');
       expect(arguments, null);
+
+      var phoneLogGranted = new PhoneLog.private(mockChannelForGranted);
+      var permissionGranted = await phoneLogGranted.checkPermission();
+
+      expect(permissionGranted, PermissionStatus.granted);
+
+      var phoneLogDenied = new PhoneLog.private(mockChannelForDenied);
+      var permissionDenied = await phoneLogDenied.checkPermission();
+
+      expect(permissionDenied, PermissionStatus.denied);
+
+      var phoneLogCannotRequest = new PhoneLog.private(mockChannelForDeniedCannotRequest);
+      var permissionCannotRequest = await phoneLogCannotRequest.checkPermission();
+
+      expect(permissionCannotRequest, PermissionStatus.deniedAndCannotRequest);
     });
 
     test('request permission', () async {
