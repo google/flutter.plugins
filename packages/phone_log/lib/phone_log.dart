@@ -10,7 +10,7 @@ import 'package:flutter/services.dart';
 /// request is denied previously and user has checked 'never ask again' check
 /// box. In this case calling [requestPermission] method, the request
 /// permission dialog would not pop up.
-enum PermissionStatus {granted, denied, deniedAndCannotRequest}
+enum PermissionStatus { granted, denied, deniedAndCannotRequest }
 
 /// Provide methods to access and fetch the phone log.
 class PhoneLog {
@@ -23,7 +23,7 @@ class PhoneLog {
   factory PhoneLog() => _instance;
 
   @visibleForTesting
-  PhoneLog.private(MethodChannel platformChannel):_channel = platformChannel;
+  PhoneLog.private(MethodChannel platformChannel) : _channel = platformChannel;
 
   /// Check a [permission] and return a [Future] of the [PermissionStatus].
   Future<PermissionStatus> checkPermission() async {

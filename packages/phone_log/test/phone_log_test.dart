@@ -96,8 +96,10 @@ void main() {
 
       expect(permissionDenied, PermissionStatus.denied);
 
-      var phoneLogCannotRequest = new PhoneLog.private(mockChannelForDeniedCannotRequest);
-      var permissionCannotRequest = await phoneLogCannotRequest.checkPermission();
+      var phoneLogCannotRequest =
+          new PhoneLog.private(mockChannelForDeniedCannotRequest);
+      var permissionCannotRequest =
+          await phoneLogCannotRequest.checkPermission();
 
       expect(permissionCannotRequest, PermissionStatus.deniedAndCannotRequest);
     });
