@@ -23,14 +23,15 @@ void main() {
     mockChannelForDenied = new MockPlatformChannel();
     mockChannelForDeniedCannotRequest = new MockPlatformChannel();
 
-    when(mockChannel.invokeMethod(typed(any), any))
+    when(mockChannel.invokeMethod(typed<String>(any), any))
         .thenAnswer((Invocation invocation) {
       invokedMethod = invocation.positionalArguments[0];
       arguments = invocation.positionalArguments[1];
+      return null;
     });
 
     when(mockChannelForGetLogs.invokeMethod('getPhoneLogs', any))
-        .thenAnswer((_) => new Future(() => [
+        .thenAnswer((_) => new Future<List<Map<String, Object>>>(() => [
               {
                 'formattedNumber': '123 123 1234',
                 'number': '1231231234',
@@ -46,13 +47,13 @@ void main() {
             ]));
 
     when(mockChannelForGranted.invokeMethod('checkPermission', any))
-        .thenAnswer((_) => new Future(() => 'granted'));
+        .thenAnswer((_) => new Future<String>(() => 'granted'));
 
     when(mockChannelForDenied.invokeMethod('checkPermission', any))
-        .thenAnswer((_) => new Future(() => 'denied'));
+        .thenAnswer((_) => new Future<String>(() => 'denied'));
 
     when(mockChannelForDeniedCannotRequest.invokeMethod('checkPermission', any))
-        .thenAnswer((_) => new Future(() => 'deniedAndCannotRequest'));
+        .thenAnswer((_) => new Future<String>(() => 'deniedAndCannotRequest'));
   });
 
   group('Phone log plugin', () {
@@ -96,8 +97,10 @@ void main() {
 
       expect(permissionDenied, PermissionStatus.denied);
 
-      var phoneLogCannotRequest = new PhoneLog.private(mockChannelForDeniedCannotRequest);
-      var permissionCannotRequest = await phoneLogCannotRequest.checkPermission();
+      var phoneLogCannotRequest =
+          new PhoneLog.private(mockChannelForDeniedCannotRequest);
+      var permissionCannotRequest =
+          await phoneLogCannotRequest.checkPermission();
 
       expect(permissionCannotRequest, PermissionStatus.deniedAndCannotRequest);
     });

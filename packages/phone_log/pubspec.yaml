@@ -5,7 +5,7 @@ author: Jiaming Cheng <jiamingc@google.com>
 homepage: https://github.com/jiajiabingcheng/phone_log
 
 environment:
-  sdk: ">=1.19.0 <2.0.0"
+  sdk: ">=2.0.0 <3.0.0"
 
 dependencies:
   flutter:
@@ -19,6 +19,6 @@ flutter:
     pluginClass: PhoneLogPlugin
 
 dev_dependencies:
-  mockito: ^2.0.2
+  mockito: 3.0.0
   flutter_test:
     sdk: flutter

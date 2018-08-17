@@ -25,7 +25,6 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-
   void requestPermission() async {
     bool res = await phoneLog.requestPermission();
     print("permission request result is: " + res.toString());
@@ -35,7 +34,6 @@ class _MyAppState extends State<MyApp> {
     PermissionStatus res = await phoneLog.checkPermission();
     print("permission is: " + res.toString());
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -107,4 +105,3 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
-

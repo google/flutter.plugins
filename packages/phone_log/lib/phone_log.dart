@@ -10,7 +10,7 @@ import 'package:flutter/services.dart';
 /// request is denied previously and user has checked 'never ask again' check
 /// box. In this case calling [requestPermission] method, the request
 /// permission dialog would not pop up.
-enum PermissionStatus {granted, denied, deniedAndCannotRequest}
+enum PermissionStatus { granted, denied, deniedAndCannotRequest }
 
 /// Provide methods to access and fetch the phone log.
 class PhoneLog {
@@ -23,7 +23,7 @@ class PhoneLog {
   factory PhoneLog() => _instance;
 
   @visibleForTesting
-  PhoneLog.private(MethodChannel platformChannel):_channel = platformChannel;
+  PhoneLog.private(MethodChannel platformChannel) : _channel = platformChannel;
 
   /// Check a [permission] and return a [Future] of the [PermissionStatus].
   Future<PermissionStatus> checkPermission() async {
@@ -44,11 +44,11 @@ class PhoneLog {
   ///The unit of [duration] is second.
   Future<Iterable<CallRecord>> getPhoneLogs(
       {Int64 startDate, Int64 duration}) async {
-    var _startDate = startDate?.toString();
-    var _duration = duration?.toString();
-    Iterable records = await _channel.invokeMethod(
+    final _startDate = startDate?.toString();
+    final _duration = duration?.toString();
+    Iterable<Map<String, Object>> records = await _channel.invokeMethod(
         'getPhoneLogs', {"startDate": _startDate, "duration": _duration});
-    return records?.map((m) => new CallRecord.fromMap(m));
+    return records?.map((Map<String, Object> m) => new CallRecord.fromMap(m));
   }
 }
 
@@ -76,7 +76,7 @@ class CallRecord {
   String formattedNumber, number, callType;
   int dateYear, dateMonth, dateDay, dateHour, dateMinute, dateSecond, duration;
 
-  CallRecord.fromMap(Map m) {
+  CallRecord.fromMap(Map<String, Object> m) {
     formattedNumber = m['formattedNumber'];
     number = m['number'];
     callType = m['callType'];
