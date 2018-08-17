@@ -44,11 +44,11 @@ class PhoneLog {
   ///The unit of [duration] is second.
   Future<Iterable<CallRecord>> getPhoneLogs(
       {Int64 startDate, Int64 duration}) async {
-    var _startDate = startDate?.toString();
-    var _duration = duration?.toString();
-    Iterable records = await _channel.invokeMethod(
+    final _startDate = startDate?.toString();
+    final _duration = duration?.toString();
+    Iterable<Map<String, Object>> records = await _channel.invokeMethod(
         'getPhoneLogs', {"startDate": _startDate, "duration": _duration});
-    return records?.map((m) => new CallRecord.fromMap(m));
+    return records?.map((Map<String, Object> m) => new CallRecord.fromMap(m));
   }
 }
 
@@ -76,7 +76,7 @@ class CallRecord {
   String formattedNumber, number, callType;
   int dateYear, dateMonth, dateDay, dateHour, dateMinute, dateSecond, duration;
 
-  CallRecord.fromMap(Map m) {
+  CallRecord.fromMap(Map<String, Object> m) {
     formattedNumber = m['formattedNumber'];
     number = m['number'];
     callType = m['callType'];
