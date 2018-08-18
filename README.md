@@ -1,7 +1,6 @@
 # Flutter plugins
 
 [![Build Status](https://travis-ci.org/google/flutter.plugins.svg?branch=master)](https://travis-ci.org/google/flutter.plugins)
-[![Build Status](https://api.cirrus-ci.com/github/google/flutter.plugins.svg)](https://cirrus-ci.com/github/google/flutter.plugins)
 
 This repository contains the source code for Flutter plugins that are
 developed by Google but not by the core Flutter team.
