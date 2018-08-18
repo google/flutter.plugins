@@ -13,10 +13,10 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   Iterable<CallRecord> _callRecords;
-  var phoneLog = new PhoneLog();
+  final PhoneLog phoneLog = new PhoneLog();
 
-  Future<Null> fetchCallLogs() async {
-    var callLogs = await phoneLog.getPhoneLogs(
+  Future<void> fetchCallLogs() async {
+    final Iterable<CallRecord> callLogs = await phoneLog.getPhoneLogs(
         // startDate: 20180605, duration: 15 seconds
         startDate: new Int64(1525590000000),
         duration: new Int64(13));
@@ -26,37 +26,37 @@ class _MyAppState extends State<MyApp> {
   }
 
   void requestPermission() async {
-    bool res = await phoneLog.requestPermission();
+    final bool res = await phoneLog.requestPermission();
     print("permission request result is: " + res.toString());
   }
 
   void checkPermission() async {
-    PermissionStatus res = await phoneLog.checkPermission();
+    final PermissionStatus res = await phoneLog.checkPermission();
     print("permission is: " + res.toString());
   }
 
   @override
   Widget build(BuildContext context) {
-    var children = <Widget>[
+    final List<Widget> children = <Widget>[
       new Padding(
         padding: const EdgeInsets.all(8.0),
         child: new RaisedButton(
-            onPressed: checkPermission, child: new Text("Check permission")),
+            onPressed: checkPermission, child: const Text("Check permission")),
       ),
       new Padding(
         padding: const EdgeInsets.all(8.0),
         child: new RaisedButton(
             onPressed: requestPermission,
-            child: new Text("Request permission")),
+            child: const Text("Request permission")),
       ),
       new Padding(
           padding: const EdgeInsets.all(8.0),
           child: new RaisedButton(
-              onPressed: fetchCallLogs, child: new Text("Fetch phone log"))),
+              onPressed: fetchCallLogs, child: const Text("Fetch phone log"))),
     ];
 
-    for (CallRecord call in _callRecords ?? []) {
-      children.addAll([
+    for (CallRecord call in _callRecords ?? <CallRecord>[]) {
+      children.addAll(<Widget>[
         new Container(
           height: 16.0,
         ),
@@ -97,7 +97,7 @@ class _MyAppState extends State<MyApp> {
 
     return new MaterialApp(
       home: new Scaffold(
-        appBar: new AppBar(title: new Text('PhoneLog plugin example')),
+        appBar: new AppBar(title: const Text('PhoneLog plugin example')),
         body: new Center(
           child: new Column(children: children),
         ),

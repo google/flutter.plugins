@@ -44,15 +44,16 @@ class PhoneLog {
   ///The unit of [duration] is second.
   Future<Iterable<CallRecord>> getPhoneLogs(
       {Int64 startDate, Int64 duration}) async {
-    final _startDate = startDate?.toString();
-    final _duration = duration?.toString();
-    Iterable<Map<String, Object>> records = await _channel.invokeMethod(
-        'getPhoneLogs', {"startDate": _startDate, "duration": _duration});
+    final String _startDate = startDate?.toString();
+    final String _duration = duration?.toString();
+    final Iterable<Map<String, Object>> records = await _channel.invokeMethod(
+        'getPhoneLogs',
+        <String, String>{"startDate": _startDate, "duration": _duration});
     return records?.map((Map<String, Object> m) => new CallRecord.fromMap(m));
   }
 }
 
-var permissionMap = <String, PermissionStatus>{
+Map<String, PermissionStatus> permissionMap = <String, PermissionStatus>{
   'granted': PermissionStatus.granted,
   'denied': PermissionStatus.denied,
   'deniedAndCannotRequest': PermissionStatus.deniedAndCannotRequest
