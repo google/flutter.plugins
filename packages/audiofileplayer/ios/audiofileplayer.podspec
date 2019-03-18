@@ -16,5 +16,6 @@ A Flutter plugin for audio playback.
   s.dependency 'Flutter'
 
   s.ios.deployment_target = '8.0'
+  s.platform = :ios
 end
 
