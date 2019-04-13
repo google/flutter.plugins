@@ -49,7 +49,10 @@ class PhoneLog {
     final List<dynamic> records = await _channel.invokeMethod(
         'getPhoneLogs',
         <String, String>{"startDate": _startDate, "duration": _duration});
-    return records?.map((dynamic m) => new CallRecord.fromMap(m));
+    return records?.map((dynamic m) {
+        Map<String, Object> rec = Map.castFrom<dynamic, dynamic, String, Object>(m);
+        return new CallRecord.fromMap(rec);
+    });
   }
 }
 
