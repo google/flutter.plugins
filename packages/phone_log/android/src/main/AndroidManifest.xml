@@ -1,4 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="com.jiajiabingcheng.phonelog">
-    <uses-permission android:name="android.permission.READ_CALL_LOG"/>
+  <uses-sdk android:minSdkVersion="16" />
+  <uses-permission android:name="android.permission.READ_CALL_LOG"/>
 </manifest>
