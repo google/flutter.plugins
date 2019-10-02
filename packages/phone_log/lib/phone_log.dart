@@ -10,7 +10,7 @@ import 'package:flutter/services.dart';
 /// request is denied previously and user has checked 'never ask again' check
 /// box. In this case calling [requestPermission] method, the request
 /// permission dialog would not pop up.
-enum PermissionStatus {granted, denied, deniedAndCannotRequest}
+enum PermissionStatus { granted, denied, deniedAndCannotRequest }
 
 /// Provide methods to access and fetch the phone log.
 class PhoneLog {
@@ -23,7 +23,7 @@ class PhoneLog {
   factory PhoneLog() => _instance;
 
   @visibleForTesting
-  PhoneLog.private(MethodChannel platformChannel):_channel = platformChannel;
+  PhoneLog.private(MethodChannel platformChannel) : _channel = platformChannel;
 
   /// Check a [permission] and return a [Future] of the [PermissionStatus].
   Future<PermissionStatus> checkPermission() async {
@@ -34,7 +34,7 @@ class PhoneLog {
   /// Request a [permission] and return a [Future] of bool.
   Future<bool> requestPermission() async {
     final bool isGranted =
-        await _channel.invokeMethod("requestPermission", null);
+    await _channel.invokeMethod("requestPermission", null);
     return isGranted;
   }
 
@@ -44,15 +44,18 @@ class PhoneLog {
   ///The unit of [duration] is second.
   Future<Iterable<CallRecord>> getPhoneLogs(
       {Int64 startDate, Int64 duration}) async {
-    var _startDate = startDate?.toString();
-    var _duration = duration?.toString();
-    Iterable records = await _channel.invokeMethod(
-        'getPhoneLogs', {"startDate": _startDate, "duration": _duration});
-    return records?.map((m) => new CallRecord.fromMap(m));
+    final String _startDate = startDate?.toString();
+    final String _duration = duration?.toString();
+
+    final Iterable<Map> records = (await _channel.invokeMethod('getPhoneLogs',
+        <String, String>{"startDate": _startDate, "duration": _duration}))
+        .cast<Map>();
+    return records
+        ?.map((m) => new CallRecord.fromMap(m.cast<String, Object>()));
   }
 }
 
-var permissionMap = <String, PermissionStatus>{
+Map<String, PermissionStatus> permissionMap = <String, PermissionStatus>{
   'granted': PermissionStatus.granted,
   'denied': PermissionStatus.denied,
   'deniedAndCannotRequest': PermissionStatus.deniedAndCannotRequest
@@ -76,7 +79,7 @@ class CallRecord {
   String formattedNumber, number, callType;
   int dateYear, dateMonth, dateDay, dateHour, dateMinute, dateSecond, duration;
 
-  CallRecord.fromMap(Map m) {
+  CallRecord.fromMap(Map<String, Object> m) {
     formattedNumber = m['formattedNumber'];
     number = m['number'];
     callType = m['callType'];
