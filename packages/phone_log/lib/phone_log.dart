@@ -34,7 +34,7 @@ class PhoneLog {
   /// Request a [permission] and return a [Future] of bool.
   Future<bool> requestPermission() async {
     final bool isGranted =
-    await _channel.invokeMethod("requestPermission", null);
+        await _channel.invokeMethod("requestPermission", null);
     return isGranted;
   }
 
