@@ -46,10 +46,12 @@ class PhoneLog {
       {Int64 startDate, Int64 duration}) async {
     final String _startDate = startDate?.toString();
     final String _duration = duration?.toString();
-    final Iterable<Map<String, Object>> records = await _channel.invokeMethod(
-        'getPhoneLogs',
-        <String, String>{"startDate": _startDate, "duration": _duration});
-    return records?.map((Map<String, Object> m) => new CallRecord.fromMap(m));
+
+    final Iterable<Map> records = (await _channel.invokeMethod('getPhoneLogs',
+        <String, String>{"startDate": _startDate, "duration": _duration}))
+        .cast<Map>();
+    return records
+        ?.map((m) => new CallRecord.fromMap(m.cast<String, Object>()));
   }
 }
 
