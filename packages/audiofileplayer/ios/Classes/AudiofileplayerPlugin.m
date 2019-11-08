@@ -11,6 +11,7 @@ static NSString *const kLooping = @"looping";
 static NSString *const kReleaseMethod = @"release";
 static NSString *const kPlayMethod = @"play";
 static NSString *const kPlayFromStart = @"playFromStart";
+static NSString *const kEndpointSeconds = @"endpointSeconds";
 static NSString *const kSeekMethod = @"seek";
 static NSString *const kSetVolumeMethod = @"setVolume";
 static NSString *const kVolume = @"volume";
@@ -80,7 +81,10 @@ static NSString *const kErrorCode = @"AudioPluginError";
 
   if ([call.method isEqualToString:kPlayMethod]) {
     bool playFromStart = [call.arguments[kPlayFromStart] boolValue];
-    [player play:playFromStart];
+    NSNumber *endpointSecondsNumber = call.arguments[kEndpointSeconds];
+    NSTimeInterval endpoint =
+        endpointSecondsNumber ? [endpointSecondsNumber doubleValue] : FLTManagedPlayerPlayToEnd;
+    [player play:playFromStart endpoint:endpoint];
     result(nil);
   } else if ([call.method isEqualToString:kReleaseMethod]) {
     [player releasePlayer];
@@ -88,8 +92,10 @@ static NSString *const kErrorCode = @"AudioPluginError";
     result(nil);
   } else if ([call.method isEqualToString:kSeekMethod]) {
     NSTimeInterval position = [call.arguments[kPositionSeconds] doubleValue];
-    [player seek:position];
-    result(nil);
+    [player seek:position
+        completionHandler:^() {
+          result(nil);
+        }];
   } else if ([call.method isEqualToString:kSetVolumeMethod]) {
     double volume = [call.arguments[kVolume] doubleValue];
     [player setVolume:volume];
