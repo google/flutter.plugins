@@ -4,6 +4,8 @@
 
 @protocol FLTManagedPlayerDelegate
 
+extern NSTimeInterval const FLTManagedPlayerPlayToEnd;
+
 /**
  * Called by FLTManagedPlayer when a non-looping sound has finished playback,
  * or on calling stop().
@@ -40,10 +42,15 @@
                        delegate:(id<FLTManagedPlayerDelegate>)delegate
                       isLooping:(bool)isLooping
               remoteLoadHandler:(void (^)(BOOL))remoteLoadHandler;
-
-- (void)play:(bool)playFromStart;
+/**
+ * Plays the audio data.
+ *
+ * @param endpoint the time, as an NSTimeInterval, to play to. To play until
+ * the end, pass FLTManagedPlayerPlayToEnd.
+ */
+- (void)play:(bool)playFromStart endpoint:(NSTimeInterval)endpoint;
 - (void)releasePlayer;
-- (void)seek:(NSTimeInterval)position;
+- (void)seek:(NSTimeInterval)position completionHandler:(void (^)())completionHandler;
 - (void)setVolume:(double)volume;
 - (void)pause;
 

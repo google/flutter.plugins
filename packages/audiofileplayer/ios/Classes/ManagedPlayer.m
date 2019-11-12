@@ -2,6 +2,8 @@
 
 #import <AVFoundation/AVFoundation.h>
 
+NSTimeInterval const FLTManagedPlayerPlayToEnd = -1.0;
+
 static NSString *const kKeyPathStatus = @"status";
 static float const kTimerUpdateIntervalSeconds = 0.25;
 
@@ -17,6 +19,7 @@ static float const kTimerUpdateIntervalSeconds = 0.25;
   id _completionObserver;            // Registered on NSNotificationCenter.
   id _timeObserver;                  // Registered on the AVPlayer.
   void (^_remoteLoadHandler)(BOOL);  // Called on AVPlayer loading status change observed.
+  NSTimer *_endpointTimer;
 }
 
 // Private common initializer. [audioPlayer] or [avPlayer], but not both, must be set.
@@ -41,21 +44,25 @@ static float const kTimerUpdateIntervalSeconds = 0.25;
       _audioPlayer.numberOfLoops = isLooping ? -1 : 0;
       [_audioPlayer prepareToPlay];
       [_delegate managedPlayerDidLoadWithDuration:_audioPlayer.duration forAudioId:_audioId];
+      __weak FLTManagedPlayer *weakSelf = self;
       _positionTimer = [NSTimer
           scheduledTimerWithTimeInterval:kTimerUpdateIntervalSeconds
                                  repeats:YES
                                    block:^(NSTimer *timer) {
-                                     if (_audioPlayer.playing) {
-                                       [_delegate
-                                           managedPlayerDidUpdatePosition:_audioPlayer.currentTime
-                                                               forAudioId:_audioId];
+                                     FLTManagedPlayer *strongSelf = weakSelf;
+                                     if (strongSelf) {
+                                       if (strongSelf->_audioPlayer.playing) {
+                                         [strongSelf->_delegate
+                                             managedPlayerDidUpdatePosition:_audioPlayer.currentTime
+                                                                 forAudioId:strongSelf->_audioId];
+                                       }
                                      }
                                    }];
     } else {
       _avPlayer = avPlayer;
       _remoteLoadHandler = remoteLoadHandler;
       CMTime interval = CMTimeMakeWithSeconds(kTimerUpdateIntervalSeconds, NSEC_PER_SEC);
-      FLTManagedPlayer *__weak weakSelf = self;
+      __weak FLTManagedPlayer *weakSelf = self;
       _timeObserver = [_avPlayer
           addPeriodicTimeObserverForInterval:interval
                                        queue:nil
@@ -74,8 +81,11 @@ static float const kTimerUpdateIntervalSeconds = 0.25;
                       object:_avPlayer.currentItem
                        queue:nil
                   usingBlock:^(NSNotification *notif) {
-                    [_avPlayer seekToTime:kCMTimeZero];
-                    [_delegate managedPlayerDidFinishPlaying:_audioId];
+                    FLTManagedPlayer *strongSelf = weakSelf;
+                    if (strongSelf) {
+                      [strongSelf->_avPlayer seekToTime:kCMTimeZero];
+                      [strongSelf->_delegate managedPlayerDidFinishPlaying:_audioId];
+                    }
                   }];
       [_avPlayer.currentItem addObserver:self
                               forKeyPath:kKeyPathStatus
@@ -134,17 +144,60 @@ static float const kTimerUpdateIntervalSeconds = 0.25;
   [_avPlayer removeTimeObserver:_timeObserver];
 }
 
-- (void)play:(bool)playFromStart {
+- (void)play:(bool)playFromStart endpoint:(NSTimeInterval)endpoint {
+  // Maybe seek to start.
   if (_audioPlayer) {
     if (playFromStart) {
       _audioPlayer.currentTime = 0;
     }
-    [_audioPlayer play];
   } else {
     if (playFromStart) {
       [_avPlayer seekToTime:kCMTimeZero];
     }
-    [_avPlayer play];
+  }
+  // Handle endpoint timers and start playback.
+  if (endpoint == FLTManagedPlayerPlayToEnd) {
+    // No endpoint, clear timer and start playback.
+    [_endpointTimer invalidate];
+    _endpointTimer = nil;
+    if (_audioPlayer) {
+      [_audioPlayer play];
+    } else {
+      [_avPlayer play];
+    }
+  } else {
+    // If there is an endpoint, check that it is in the future, then start playback and schedule
+    // the pausing after a duration.
+    NSTimeInterval position;
+    if (_audioPlayer) {
+      position = _audioPlayer.currentTime;
+    } else {
+      position = (NSTimeInterval)CMTimeGetSeconds(_avPlayer.currentTime);
+    }
+    NSTimeInterval duration = endpoint - position;
+    NSLog(@"Called play() at position %.2f seconds, to play for duration %.2f seconds.", position,
+          duration);
+    if (duration <= 0) {
+      NSLog(@"Called play() at position after endpoint. No playback occurred.");
+      return;
+    }
+    [_endpointTimer invalidate];
+    if (_audioPlayer) {
+      [_audioPlayer play];
+    } else {
+      [_avPlayer play];
+    }
+    __weak FLTManagedPlayer *weakSelf = self;
+    _endpointTimer = [NSTimer
+        scheduledTimerWithTimeInterval:duration
+                               repeats:NO
+                                 block:^(NSTimer *timer) {
+                                   FLTManagedPlayer *strongSelf = weakSelf;
+                                   if (strongSelf) {
+                                     [strongSelf pause];
+                                     [strongSelf->_delegate managedPlayerDidFinishPlaying:_audioId];
+                                   }
+                                 }];
   }
 }
 
@@ -161,11 +214,15 @@ static float const kTimerUpdateIntervalSeconds = 0.25;
   }
 }
 
-- (void)seek:(NSTimeInterval)position {
+- (void)seek:(NSTimeInterval)position completionHandler:(void (^)())completionHandler {
   if (_audioPlayer) {
     _audioPlayer.currentTime = position;
+    completionHandler();
   } else {
-    [_avPlayer seekToTime:CMTimeMakeWithSeconds(position, NSEC_PER_SEC)];
+    [_avPlayer seekToTime:CMTimeMakeWithSeconds(position, NSEC_PER_SEC)
+        completionHandler:^(BOOL completed) {
+          completionHandler();
+        }];
   }
 }
 
