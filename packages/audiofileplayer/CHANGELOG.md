@@ -1,3 +1,3 @@
-## 0.0.1 - 18 March 2019
+## 1.0.0 - 7 Nov 2019
 
   * Initial open source release
