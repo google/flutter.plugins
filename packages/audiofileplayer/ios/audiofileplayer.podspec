@@ -9,13 +9,14 @@ Pod::Spec.new do |s|
 A Flutter plugin for audio playback.
                        DESC
   s.homepage         = 'http://example.com'
+  s.authors          = 'Daniel Iglesia'
   s.license          = { :file => '../LICENSE' }
   s.source           = { :path => '.' }
   s.source_files = 'Classes/**/*'
   s.public_header_files = 'Classes/**/*.h'
+  s.requires_arc = true
   s.dependency 'Flutter'
 
-  s.ios.deployment_target = '8.0'
-  s.platform = :ios
+  s.platform = :ios, '8.0'
 end
 
