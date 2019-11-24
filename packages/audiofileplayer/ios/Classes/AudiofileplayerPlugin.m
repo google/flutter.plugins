@@ -1,3 +1,4 @@
+#import <AVFoundation/AVFoundation.h>
 #import "AudiofileplayerPlugin.h"
 #import "ManagedPlayer.h"
 
@@ -22,6 +23,12 @@ static NSString *const kDurationSeconds = @"duration_seconds";
 static NSString *const kOnPositionCallback = @"onPosition";
 static NSString *const kPositionSeconds = @"position_seconds";
 static NSString *const kErrorCode = @"AudioPluginError";
+
+static NSString *const kAudioCategoryMethod = @"iosAudioCategory";
+static NSString *const kAudioCategory = @"iosAudioCategory";
+static NSString *const kAudioCategoryAmbientSolo = @"iosAudioCategoryAmbientSolo";
+static NSString *const kAudioCategoryAmbientMixed = @"iosAudioCategoryAmbientMixed";
+static NSString *const kAudioCategoryPlayback = @"iosAudioCategoryPlayback";
 
 @interface AudiofileplayerPlugin () <FLTManagedPlayerDelegate>
 @end
@@ -48,13 +55,33 @@ static NSString *const kErrorCode = @"AudioPluginError";
     _registrar = registrar;
     _channel = channel;
     _playersDict = [NSMutableDictionary dictionary];
+    // Set audio category to initial default of 'playback'.
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback
+                                           error:nil];
   }
   return self;
 }
 
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
   NSLog(@"handleMethodCall: method = %@", call.method);
-  if ([call.method isEqualToString:@"load"]) {
+
+  // Setting the audio category.
+  if ([call.method isEqualToString:kAudioCategoryMethod]) {
+    NSString *categoryString = call.arguments[kAudioCategory];
+    AVAudioSessionCategory category;
+    if ([categoryString isEqualToString:kAudioCategoryAmbientSolo]) {
+      category = AVAudioSessionCategorySoloAmbient;
+    } else if ([categoryString isEqualToString:kAudioCategoryAmbientMixed]) {
+      category = AVAudioSessionCategoryAmbient;
+    } if ([categoryString isEqualToString:kAudioCategoryPlayback]) {
+      category = AVAudioSessionCategoryPlayback;
+    }
+    [[AVAudioSession sharedInstance] setCategory:category error:nil];
+    return;
+  }
+
+  // Loading an audio instance.
+  if ([call.method isEqualToString:kLoadMethod]) {
     [self handleLoadWithCall:call result:result];
     return;
   }
