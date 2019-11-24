@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:typed_data';
 import 'dart:ui' show AppLifecycleState;
 
@@ -32,6 +33,39 @@ const String durationSecondsKey = 'duration_seconds';
 const String onPositionCallback = 'onPosition';
 const String positionSecondsKey = 'position_seconds';
 const String errorCode = 'AudioPluginError';
+
+const String iosAudioCategoryMethod = 'iosAudioCategory';
+const String iosAudioCategoryKey = 'iosAudioCategory';
+const String iosAudioCategoryAmbientSolo = 'iosAudioCategoryAmbientSolo';
+const String iosAudioCategoryAmbientMixed = 'iosAudioCategoryAmbientMixed';
+const String iosAudioCategoryPlayback = 'iosAudioCategoryPlayback';
+
+/// Represents audio playback category on iOS.
+///
+/// An 'ambient' category should be used for tasks like game audio, whereas
+/// the [playback] category should be used for tasks like music player playback.
+///
+/// Note that for background audio, the [shouldPlayWhileAppPaused] flag must
+/// also be set.
+///
+/// See
+/// https://developer.apple.com/documentation/avfoundation/avaudiosessioncategory
+/// for more information.
+enum IosAudioCategory {
+  /// Audio is silenced by screen lock and the silent switch; audio will not mix
+  /// with other apps' audio.
+  ambientSolo,
+
+  /// Audio is silenced by screen lock and the silent switch; audio will mix
+  /// with other apps' (mixable) audio.
+  ambientMixed,
+
+  /// Audio is not silenced by screen lock or silent switch; audio will not mix
+  /// with other apps' audio.
+  ///
+  /// The default value.
+  playback
+}
 
 /// A plugin for audio playback.
 ///
@@ -170,7 +204,7 @@ class Audio with WidgetsBindingObserver {
   }
 
   @visibleForTesting
-  static final MethodChannel channel = MethodChannel(channelName)
+  static final MethodChannel channel = const MethodChannel(channelName)
     ..setMethodCallHandler(handleMethodCall);
 
   static final Uuid _uuid = Uuid();
@@ -500,6 +534,25 @@ class Audio with WidgetsBindingObserver {
       if (_playing && !shouldPlayWhileAppPaused) {
         _playNative(false, _endpointSeconds);
       }
+    }
+  }
+
+  /// Sets the iOS audio category.
+  ///
+  /// Only communicates with the underlying plugin on iOS; no-op otherwise.
+  static Future<void> setIosAudioCategory(IosAudioCategory category) async {
+    const Map<IosAudioCategory, String> categoryToString =
+        <IosAudioCategory, String>{
+      IosAudioCategory.ambientSolo: iosAudioCategoryAmbientSolo,
+      IosAudioCategory.ambientMixed: iosAudioCategoryAmbientMixed,
+      IosAudioCategory.playback: iosAudioCategoryPlayback
+    };
+    if (!Platform.isIOS) return;
+    try {
+      await channel.invokeMethod<dynamic>(iosAudioCategoryMethod,
+          <String, dynamic>{iosAudioCategoryKey: categoryToString[category]});
+    } on PlatformException catch (e) {
+      _logger.severe('setIosAudioCategory error, category: $category', e);
     }
   }
 

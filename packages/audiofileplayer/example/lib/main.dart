@@ -27,6 +27,9 @@ class _MyAppState extends State<MyApp> {
   bool _remoteAudioLoading = false;
   String _remoteErrorMessage;
 
+  // The iOS audio category dropdown item in the fourth card.
+  IosAudioCategory _iosAudioCategory = IosAudioCategory.playback;
+
   @override
   void initState() {
     super.initState();
@@ -57,7 +60,7 @@ class _MyAppState extends State<MyApp> {
           child: Column(
             children: <Widget>[
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                padding: const EdgeInsets.symmetric(horizontal: 4.0),
                 child: RaisedButton(
                     onPressed: onTap,
                     child: isPlaying
@@ -198,8 +201,33 @@ class _MyAppState extends State<MyApp> {
                     }),
           _remoteErrorMessage != null
               ? Text(_remoteErrorMessage,
-                  style: TextStyle(color: const Color(0xFFFF0000)))
+                  style: const TextStyle(color: const Color(0xFFFF0000)))
               : Text(_remoteAudioLoading ? 'loading...' : 'loaded')
+        ]),
+        _cardWrapper(<Widget>[
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+            const Text('Enable background playback:'),
+            Checkbox(
+                value: Audio.shouldPlayWhileAppPaused,
+                onChanged: (bool isOn) =>
+                    setState(() => Audio.shouldPlayWhileAppPaused = isOn))
+          ]),
+          const Text('(iOS only) iOS audio category:'),
+          DropdownButton<IosAudioCategory>(
+            value: _iosAudioCategory,
+            onChanged: (IosAudioCategory newValue) {
+              setState(() {
+                _iosAudioCategory = newValue;
+                Audio.setIosAudioCategory(_iosAudioCategory);
+              });
+            },
+            items: IosAudioCategory.values.map((IosAudioCategory category) {
+              return DropdownMenuItem<IosAudioCategory>(
+                value: category,
+                child: Text(category.toString()),
+              );
+            }).toList(),
+          )
         ]),
       ]),
     ));
