@@ -1,7 +1,6 @@
 name: audiofileplayer
 description: A Flutter plugin for audio playback.
-version: 1.0.0
-author: Daniel Iglesia <diglesia@google.com>
+version: 1.0.1
 homepage: https://github.com/google/flutter.plugins/tree/master/packages/audiofileplayer
 
 environment:
