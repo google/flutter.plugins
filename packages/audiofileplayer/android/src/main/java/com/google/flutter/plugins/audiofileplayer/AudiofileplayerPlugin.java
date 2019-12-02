@@ -74,6 +74,7 @@ public class AudiofileplayerPlugin implements MethodCallHandler {
     }
     // All subsequent calls need a valid player.
     ManagedMediaPlayer player = getAndVerifyPlayer(call, result);
+
     if (call.method.equals(PLAY_METHOD)) {
       Boolean playFromStartBoolean = call.argument(PLAY_FROM_START);
       boolean playFromStart = playFromStartBoolean.booleanValue();
@@ -135,6 +136,7 @@ public class AudiofileplayerPlugin implements MethodCallHandler {
         String key = registrar.lookupKeyForAsset(flutterPath);
         AssetFileDescriptor fd = assetManager.openFd(key);
         ManagedMediaPlayer newPlayer = new LocalManagedMediaPlayer(audioId, fd, this, looping);
+        fd.close();
         mediaPlayers.put(audioId, newPlayer);
         handleDurationForPlayer(newPlayer, audioId);
         result.success(null);

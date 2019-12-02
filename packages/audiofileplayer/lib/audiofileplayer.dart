@@ -342,15 +342,21 @@ class Audio with WidgetsBindingObserver {
         audioIdKey: _audioId,
         loopingKey: _looping
       });
-    } on PlatformException catch (_) {
+    } on PlatformException catch (e) {
       // Note that exceptions during [_load] are assumed to have failed to
       // create underlying resources, so a call to [_releaseNative] is not
       // required. Just remove the instance from the static structures it was
       // added to within this call to [_load].
       _undisposedAudios.remove(_audioId);
       _awaitingOnDurationAudios.remove(_audioId);
-      // If this Audio does not use an onError callback, rethrow the exception.
-      if (_usingOnErrorAudios.remove(_audioId) == null) rethrow;
+      final Audio audio = _usingOnErrorAudios.remove(_audioId);
+      if (audio != null) {
+        // Audio has an onError callback.
+        audio._onError(e.message);
+      } else {
+        // Audio does not use an onError callback: rethrow the exception.
+        rethrow;
+      }
     }
   }
 
@@ -486,9 +492,14 @@ class Audio with WidgetsBindingObserver {
         audioIdKey: _audioId,
         positionSecondsKey: positionSeconds
       });
-    } on PlatformException catch (_) {
-      // If this Audio does not use an onError callback, rethrow the exception.
-      if (!_usingOnErrorAudios.containsKey(_audioId)) rethrow;
+    } on PlatformException catch (e) {
+      if (_usingOnErrorAudios.containsKey(_audioId)) {
+        // Audio has an onError callback.
+        _usingOnErrorAudios[_audioId]._onError(e.message);
+      } else {
+        // Audio does not use an onError callback: rethrow the exception.
+        rethrow;
+      }
     }
   }
 
@@ -515,9 +526,14 @@ class Audio with WidgetsBindingObserver {
     try {
       await _sendMethodCall(_audioId, setVolumeMethod,
           <String, dynamic>{audioIdKey: _audioId, volumeKey: volume});
-    } on PlatformException catch (_) {
-      // If this Audio does not use an onError callback, rethrow the exception.
-      if (!_usingOnErrorAudios.containsKey(_audioId)) rethrow;
+    } on PlatformException catch (e) {
+      if (_usingOnErrorAudios.containsKey(_audioId)) {
+        // Audio has an onError callback.
+        _usingOnErrorAudios[_audioId]._onError(e.message);
+      } else {
+        // Audio does not use an onError callback: rethrow the exception.
+        rethrow;
+      }
     }
   }
 
@@ -565,9 +581,14 @@ class Audio with WidgetsBindingObserver {
       };
       if (endpointSeconds != null) args[endpointSecondsKey] = endpointSeconds;
       await _sendMethodCall(_audioId, playMethod, args);
-    } on PlatformException catch (_) {
-      // If this Audio does not use an onError callback, rethrow the exception.
-      if (!_usingOnErrorAudios.containsKey(_audioId)) rethrow;
+    } on PlatformException catch (e) {
+      if (_usingOnErrorAudios.containsKey(_audioId)) {
+        // Audio has an onError callback.
+        _usingOnErrorAudios[_audioId]._onError(e.message);
+      } else {
+        // Audio does not use an onError callback: rethrow the exception.
+        rethrow;
+      }
     }
   }
 
@@ -576,9 +597,14 @@ class Audio with WidgetsBindingObserver {
     try {
       await _sendMethodCall(
           _audioId, pauseMethod, <String, dynamic>{audioIdKey: _audioId});
-    } on PlatformException catch (_) {
-      // If this Audio does not use an onError callback, rethrow the exception.
-      if (!_usingOnErrorAudios.containsKey(_audioId)) rethrow;
+    } on PlatformException catch (e) {
+      if (_usingOnErrorAudios.containsKey(_audioId)) {
+        // Audio has an onError callback.
+        _usingOnErrorAudios[_audioId]._onError(e.message);
+      } else {
+        // Audio does not use an onError callback: rethrow the exception.
+        rethrow;
+      }
     }
   }
 
@@ -627,9 +653,14 @@ class Audio with WidgetsBindingObserver {
     try {
       await _sendMethodCall(
           audioId, releaseMethod, <String, dynamic>{audioIdKey: audioId});
-    } on PlatformException catch (_) {
-      // If this Audio does not use an onError callback, rethrow the exception.
-      if (!_usingOnErrorAudios.containsKey(audioId)) rethrow;
+    } on PlatformException catch (e) {
+      if (_usingOnErrorAudios.containsKey(audioId)) {
+        // Audio has an onError callback.
+        _usingOnErrorAudios[audioId]._onError(e.message);
+      } else {
+        // Audio does not use an onError callback: rethrow the exception.
+        rethrow;
+      }
     }
   }
 
@@ -643,11 +674,8 @@ class Audio with WidgetsBindingObserver {
     } on PlatformException catch (e) {
       _logger.severe(
           '_sendMethodCall error: audioId: $audioId method: $method', e);
-
-      // Call onError on the Audio instance.
-      _usingOnErrorAudios[audioId]?._onError(e.message);
-      // Rethrow to the calling Audio method. Callers should not rethrow if
-      // this instance of Audio uses onError().
+      // Calling methods should do any cleanup. Then, either call the _onError
+      // callback (if the audio uses it), or rethrow again.
       rethrow;
     }
   }
