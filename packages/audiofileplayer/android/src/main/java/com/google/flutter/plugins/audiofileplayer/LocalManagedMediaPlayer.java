@@ -1,8 +1,15 @@
 package com.google.flutter.plugins.audiofileplayer;
 
+import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
+import android.os.Build;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.UUID;
 
 /**
  * Wraps a MediaPlayer for local asset use by AudiofileplayerPlugin.
@@ -34,29 +41,47 @@ class LocalManagedMediaPlayer extends ManagedMediaPlayer {
    */
   public LocalManagedMediaPlayer(
       String audioId,
-      AssetFileDescriptor fd,
+      AssetFileDescriptor afd,
       AudiofileplayerPlugin parentAudioPlugin,
       boolean looping)
       throws IOException {
     this(audioId, parentAudioPlugin, looping);
-    player.setDataSource(fd);
+    player.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
     player.prepare();
   }
 
   /**
-   * Create a ManagedMediaPlayer from an BufferMediaDataSource.
+   * Create a ManagedMediaPlayer from a byte array.
+   *
+   * Uses {@link android.media.MediaPlayer#setDataSource(android.media.MediaDataSource)} if available.
+   * Otherwise falls back to writing the byte[] to disk and reading it back.
    *
    * @throws IllegalArgumentException if BufferMediaDataSource is invalid.
-   * @throws IOException if underlying MediaPlayer cannot load BufferMediaDataSource.
+   * @throws IOException if underlying MediaPlayer cannot load BufferMediaDataSource
+   * or FileDescriptor.
    */
   public LocalManagedMediaPlayer(
       String audioId,
-      BufferMediaDataSource mediaDataSource,
+      byte[] audioBytes,
       AudiofileplayerPlugin parentAudioPlugin,
-      boolean looping)
+      boolean looping,
+      Context context)
       throws IOException, IllegalArgumentException, IllegalStateException {
     this(audioId, parentAudioPlugin, looping);
-    player.setDataSource(mediaDataSource);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+      player.setDataSource(new BufferMediaDataSource(audioBytes));
+    } else {
+      // On older SDK versions, write the byte[] to disk, then read as FileDescriptor.
+      File tempAudioFile =
+              File.createTempFile(UUID.randomUUID().toString(), null, context.getCacheDir());
+      tempAudioFile.deleteOnExit();
+      FileOutputStream fos = new FileOutputStream(tempAudioFile);
+      fos.write(audioBytes);
+      fos.close();
+      FileInputStream fis = new FileInputStream(tempAudioFile);
+      player.setDataSource(fis.getFD());
+      fis.close();
+    }
     player.prepare();
   }
 }

@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 import 'package:audiofileplayer/audiofileplayer.dart';
 
@@ -20,6 +23,7 @@ class _MyAppState extends State<MyApp> {
 
   // On-the-fly audio data for the second card.
   int _spawnedAudioCount = 0;
+  ByteData _audioByteData;
 
   // Remote url audio data for the third card.
   Audio _remoteAudio;
@@ -41,6 +45,7 @@ class _MyAppState extends State<MyApp> {
               _audioPositionSeconds = positionSeconds;
               _seekSliderValue = _audioPositionSeconds / _audioDurationSeconds;
             }));
+    _loadAudioByteData();
     _loadRemoteAudio();
   }
 
@@ -78,6 +83,11 @@ class _MyAppState extends State<MyApp> {
   static String _stringForSeconds(double seconds) {
     if (seconds == null) return null;
     return '${(seconds ~/ 60)}:${(seconds.truncate() % 60).toString().padLeft(2, '0')}';
+  }
+
+  void _loadAudioByteData() async {
+    _audioByteData = await rootBundle.load('assets/audio/sinesweep.mp3');
+    setState(() {});
   }
 
   void _loadRemoteAudio() {
@@ -119,7 +129,7 @@ class _MyAppState extends State<MyApp> {
       body: ListView(children: <Widget>[
         // A card controlling a pre-loaded (on app start) audio object.
         _cardWrapper(<Widget>[
-          const Text('Preloaded audio, with transport controls.'),
+          const Text('Preloaded asset audio, with transport controls.'),
           Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
             _transportButtonWithTitle('play from start', false, () {
               _audio.play();
@@ -166,14 +176,32 @@ class _MyAppState extends State<MyApp> {
           const Text('volume (linear amplitude)'),
         ]),
         _cardWrapper(<Widget>[
-          const Text('Spawn overlapping one-shot audio playback'),
-          _transportButtonWithTitle('(hit multiple times)', false, () {
-            Audio.load('assets/audio/sinesweep.mp3',
-                onComplete: () => setState(() => --_spawnedAudioCount))
-              ..play()
-              ..dispose();
-            setState(() => ++_spawnedAudioCount);
-          }),
+          const Text(
+            'Spawn overlapping one-shot audio playback.\n(tap multiple times)',
+            textAlign: TextAlign.center,
+          ),
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
+            _transportButtonWithTitle('audio from assets', false, () {
+              Audio.load('assets/audio/sinesweep.mp3',
+                  onComplete: () => setState(() => --_spawnedAudioCount))
+                ..play()
+                ..dispose();
+              setState(() => ++_spawnedAudioCount);
+            }),
+            _transportButtonWithTitle(
+                'audio from ByteData',
+                false,
+                _audioByteData == null
+                    ? null
+                    : () {
+                        Audio.loadFromByteData(_audioByteData,
+                            onComplete: () =>
+                                setState(() => --_spawnedAudioCount))
+                          ..play()
+                          ..dispose();
+                        setState(() => ++_spawnedAudioCount);
+                      })
+          ]),
           Text('Spawned audio count: $_spawnedAudioCount'),
         ]),
         _cardWrapper(<Widget>[
