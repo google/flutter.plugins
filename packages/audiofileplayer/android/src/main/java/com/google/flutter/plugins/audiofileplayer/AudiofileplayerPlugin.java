@@ -141,8 +141,7 @@ public class AudiofileplayerPlugin implements MethodCallHandler {
       } else if (call.argument(AUDIO_BYTES) != null) {
         byte[] audioBytes = call.argument(AUDIO_BYTES);
         ManagedMediaPlayer newPlayer =
-            new LocalManagedMediaPlayer(
-                audioId, new BufferMediaDataSource(audioBytes), this, looping);
+            new LocalManagedMediaPlayer(audioId, audioBytes, this, looping, registrar.context());
         mediaPlayers.put(audioId, newPlayer);
         handleDurationForPlayer(newPlayer, audioId);
         result.success(null);
