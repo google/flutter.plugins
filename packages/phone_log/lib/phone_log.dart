@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:fixnum/fixnum.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// [PermissionStatus.granted] means that the permission is already granted.
@@ -12,29 +11,23 @@ import 'package:flutter/services.dart';
 /// permission dialog would not pop up.
 enum PermissionStatus { granted, denied, deniedAndCannotRequest }
 
+const channel = MethodChannel('github.com/jiajiabingcheng/phone_log');
+
 /// Provide methods to access and fetch the phone log.
 class PhoneLog {
-  final MethodChannel _channel;
-
-  static final PhoneLog _instance = new PhoneLog.private(
-      const MethodChannel('github.com/jiajiabingcheng/phone_log'));
-
   /// Provides an instance of this class.
-  factory PhoneLog() => _instance;
-
-  @visibleForTesting
-  PhoneLog.private(MethodChannel platformChannel) : _channel = platformChannel;
+  const PhoneLog();
 
   /// Check a [permission] and return a [Future] of the [PermissionStatus].
   Future<PermissionStatus> checkPermission() async {
-    final String status = await _channel.invokeMethod("checkPermission", null);
+    final String status = await channel.invokeMethod("checkPermission", null);
     return permissionMap[status];
   }
 
   /// Request a [permission] and return a [Future] of bool.
   Future<bool> requestPermission() async {
     final bool isGranted =
-        await _channel.invokeMethod("requestPermission", null);
+        await channel.invokeMethod("requestPermission", null);
     return isGranted;
   }
 
@@ -47,9 +40,9 @@ class PhoneLog {
     final String _startDate = startDate?.toString();
     final String _duration = duration?.toString();
 
-    final Iterable<Map> records = (await _channel.invokeMethod('getPhoneLogs',
-        <String, String>{"startDate": _startDate, "duration": _duration}))
-        .cast<Map>();
+    final Iterable<Map> records = (await channel.invokeMethod('getPhoneLogs',
+            <String, String>{"startDate": _startDate, "duration": _duration}))
+        ?.cast<Map>();
     return records
         ?.map((m) => new CallRecord.fromMap(m.cast<String, Object>()));
   }
@@ -92,3 +85,4 @@ class CallRecord {
     duration = m['duration'];
   }
 }
+

@@ -2,64 +2,68 @@ import 'dart:async';
 
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/services.dart';
-import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
 import 'package:phone_log/phone_log.dart';
 
+typedef Future<dynamic> Handler(MethodCall call);
+
 void main() {
   String invokedMethod;
   dynamic arguments;
-  MockPlatformChannel mockChannel;
-  MockPlatformChannel mockChannelForGetLogs;
-  MockPlatformChannel mockChannelForGranted;
-  MockPlatformChannel mockChannelForDenied;
-  MockPlatformChannel mockChannelForDeniedCannotRequest;
+  Handler mockChannel;
+  Handler mockChannelForGetLogs;
+  Handler mockChannelForGranted;
+  Handler mockChannelForDenied;
+  Handler mockChannelForDeniedCannotRequest;
+  PhoneLog phoneLog;
 
   setUp(() {
-    mockChannel = new MockPlatformChannel();
-    mockChannelForGetLogs = new MockPlatformChannel();
-    mockChannelForGranted = new MockPlatformChannel();
-    mockChannelForDenied = new MockPlatformChannel();
-    mockChannelForDeniedCannotRequest = new MockPlatformChannel();
-
-    when(mockChannel.invokeMethod(any, any))
-        .thenAnswer((Invocation invocation) {
-      invokedMethod = invocation.positionalArguments[0];
-      arguments = invocation.positionalArguments[1];
+    mockChannel = (MethodCall call) {
+      invokedMethod = call.method;
+      arguments = call.arguments;
       return null;
-    });
+    };
 
-    when(mockChannelForGetLogs.invokeMethod('getPhoneLogs', any)).thenAnswer(
-        (_) =>
-            new Future<List<Map<String, Object>>>(() => <Map<String, Object>>[
-                  <String, Object>{
-                    'formattedNumber': '123 123 1234',
-                    'number': '1231231234',
-                    'callType': 'INCOMING_TYPE',
-                    'dateYear': 2018,
-                    'dateMonth': 6,
-                    'dateDay': 15,
-                    'dateHour': 3,
-                    'dateMinute': 16,
-                    'dateSecond': 23,
-                    'duration': 123
-                  }
-                ]));
+    mockChannelForGetLogs = (MethodCall call) async {
+      if (call.method == 'getPhoneLogs') {
+        return <Map<String, Object>>[
+          <String, Object>{
+            'formattedNumber': '123 123 1234',
+            'number': '1231231234',
+            'callType': 'INCOMING_TYPE',
+            'dateYear': 2018,
+            'dateMonth': 6,
+            'dateDay': 15,
+            'dateHour': 3,
+            'dateMinute': 16,
+            'dateSecond': 23,
+            'duration': 123
+          }
+        ];
+      } else {
+        return null;
+      }
+    };
 
-    when(mockChannelForGranted.invokeMethod('checkPermission', any))
-        .thenAnswer((_) => new Future<String>(() => 'granted'));
+    mockChannelForGranted = (MethodCall call) async {
+      return call.method == 'checkPermission' ? 'granted' : null;
+    };
 
-    when(mockChannelForDenied.invokeMethod('checkPermission', any))
-        .thenAnswer((_) => new Future<String>(() => 'denied'));
+    mockChannelForDenied = (MethodCall call) async {
+      return call.method == 'checkPermission' ? 'denied' : null;
+    };
 
-    when(mockChannelForDeniedCannotRequest.invokeMethod('checkPermission', any))
-        .thenAnswer((_) => new Future<String>(() => 'deniedAndCannotRequest'));
+    mockChannelForDeniedCannotRequest = (MethodCall call) async {
+      return call.method == 'checkPermission' ? 'deniedAndCannotRequest' : null;
+    };
+
+    phoneLog = PhoneLog();
   });
 
   group('Phone log plugin', () {
     test('fetch phone log', () async {
-      final PhoneLog phoneLog = new PhoneLog.private(mockChannelForGetLogs);
+      channel.setMockMethodCallHandler(mockChannelForGetLogs);
 
       final Iterable<CallRecord> records = await phoneLog.getPhoneLogs(
           startDate: new Int64(123456789), duration: new Int64(12));
@@ -73,8 +77,8 @@ void main() {
       expect(record.dateYear, 2018);
       expect(record.duration, 123);
 
-      final PhoneLog phoneLogMethod = new PhoneLog.private(mockChannel);
-      await phoneLogMethod.getPhoneLogs(
+      channel.setMockMethodCallHandler(mockChannel);
+      await phoneLog.getPhoneLogs(
           startDate: new Int64(123456789), duration: new Int64(12));
       expect(invokedMethod, 'getPhoneLogs');
       expect(arguments,
@@ -82,37 +86,34 @@ void main() {
     });
 
     test('check permission', () async {
-      final PhoneLog phoneLog = new PhoneLog.private(mockChannel);
+      channel.setMockMethodCallHandler(mockChannel);
 
       await phoneLog.checkPermission();
 
       expect(invokedMethod, 'checkPermission');
       expect(arguments, null);
 
-      final PhoneLog phoneLogGranted =
-          new PhoneLog.private(mockChannelForGranted);
+      channel.setMockMethodCallHandler(mockChannelForGranted);
       final PermissionStatus permissionGranted =
-          await phoneLogGranted.checkPermission();
+          await phoneLog.checkPermission();
 
       expect(permissionGranted, PermissionStatus.granted);
 
-      final PhoneLog phoneLogDenied =
-          new PhoneLog.private(mockChannelForDenied);
+      channel.setMockMethodCallHandler(mockChannelForDenied);
       final PermissionStatus permissionDenied =
-          await phoneLogDenied.checkPermission();
+          await phoneLog.checkPermission();
 
       expect(permissionDenied, PermissionStatus.denied);
 
-      final PhoneLog phoneLogCannotRequest =
-          new PhoneLog.private(mockChannelForDeniedCannotRequest);
+      channel.setMockMethodCallHandler(mockChannelForDeniedCannotRequest);
       final PermissionStatus permissionCannotRequest =
-          await phoneLogCannotRequest.checkPermission();
+          await phoneLog.checkPermission();
 
       expect(permissionCannotRequest, PermissionStatus.deniedAndCannotRequest);
     });
 
     test('request permission', () async {
-      final PhoneLog phoneLog = new PhoneLog.private(mockChannel);
+      channel.setMockMethodCallHandler(mockChannel);
 
       await phoneLog.requestPermission();
 
@@ -121,5 +122,3 @@ void main() {
     });
   });
 }
-
-class MockPlatformChannel extends Mock implements MethodChannel {}
