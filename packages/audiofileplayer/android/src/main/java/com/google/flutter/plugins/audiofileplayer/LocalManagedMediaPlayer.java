@@ -15,7 +15,7 @@ import java.util.UUID;
  * Wraps a MediaPlayer for local asset use by AudiofileplayerPlugin.
  *
  * <p>Used for local audio data only; loading occurs synchronously. Loading remote audio should use
- * ManagedRemoteMediaPlayer.
+ * RemoteManagedMediaPlayer.
  */
 class LocalManagedMediaPlayer extends ManagedMediaPlayer {
 
@@ -25,10 +25,10 @@ class LocalManagedMediaPlayer extends ManagedMediaPlayer {
    * <p>Callers must subsequently set a data source and call {@link MediaPlayer#prepare()}.
    */
   private LocalManagedMediaPlayer(
-      String audioId, AudiofileplayerPlugin parentAudioPlugin, boolean looping)
+      String audioId, AudiofileplayerPlugin parentAudioPlugin, boolean looping,
+      boolean playInBackground)
       throws IllegalArgumentException, IOException {
-    super(audioId, parentAudioPlugin);
-    player.setLooping(looping);
+    super(audioId, parentAudioPlugin, looping, playInBackground);
     player.setOnErrorListener(this);
     player.setOnCompletionListener(this);
     player.setOnSeekCompleteListener(this);
@@ -43,9 +43,10 @@ class LocalManagedMediaPlayer extends ManagedMediaPlayer {
       String audioId,
       AssetFileDescriptor afd,
       AudiofileplayerPlugin parentAudioPlugin,
-      boolean looping)
+      boolean looping,
+      boolean playInBackground)
       throws IOException {
-    this(audioId, parentAudioPlugin, looping);
+    this(audioId, parentAudioPlugin, looping, playInBackground);
     player.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
     player.prepare();
   }
@@ -65,9 +66,10 @@ class LocalManagedMediaPlayer extends ManagedMediaPlayer {
       byte[] audioBytes,
       AudiofileplayerPlugin parentAudioPlugin,
       boolean looping,
+      boolean playInBackground,
       Context context)
       throws IOException, IllegalArgumentException, IllegalStateException {
-    this(audioId, parentAudioPlugin, looping);
+    this(audioId, parentAudioPlugin, looping, playInBackground);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
       player.setDataSource(new BufferMediaDataSource(audioBytes));
     } else {
