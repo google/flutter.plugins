@@ -96,7 +96,7 @@ matrix:
         - SHARD="Build example ipas 1/2"
         - PLUGIN_SHARDING="--shardIndex 0 --shardCount 2"
       language: generic
-      osx_image: xcode9.3
+      osx_image: xcode10.2
       before_script:
         - ./script/before_build_ipas.sh
         - export PATH=`pwd`/flutter/bin:`pwd`/flutter/bin/cache/dart-sdk/bin:$PATH
@@ -108,7 +108,7 @@ matrix:
         - SHARD="Build example ipas 2/2"
         - PLUGIN_SHARDING="--shardIndex 1 --shardCount 2"
       language: generic
-      osx_image: xcode9.3
+      osx_image: xcode10.2
       before_script:
         - ./script/before_build_ipas.sh
         - export PATH=`pwd`/flutter/bin:`pwd`/flutter/bin/cache/dart-sdk/bin:$PATH
