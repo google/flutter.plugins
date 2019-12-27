@@ -13,7 +13,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   Iterable<CallRecord> _callRecords;
-  final PhoneLog phoneLog = new PhoneLog();
+  final PhoneLog phoneLog = const PhoneLog();
 
   Future<void> fetchCallLogs() async {
     final Iterable<CallRecord> callLogs = await phoneLog.getPhoneLogs(

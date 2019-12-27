@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fixnum/fixnum.dart';
+import 'package:flutter/widgets.dart' show WidgetsFlutterBinding;
 import 'package:flutter/services.dart';
 import 'package:test/test.dart';
 
@@ -9,6 +10,8 @@ import 'package:phone_log/phone_log.dart';
 typedef Future<dynamic> Handler(MethodCall call);
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
   String invokedMethod;
   dynamic arguments;
   Handler mockChannel;
@@ -58,7 +61,7 @@ void main() {
       return call.method == 'checkPermission' ? 'deniedAndCannotRequest' : null;
     };
 
-    phoneLog = PhoneLog();
+    phoneLog = const PhoneLog();
   });
 
   group('Phone log plugin', () {
