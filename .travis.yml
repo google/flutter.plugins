@@ -12,7 +12,7 @@ matrix:
             - ubuntu-toolchain-r-test # if we don't specify this, the libstdc++6 we get is the wrong version
           packages:
             - libstdc++6
-            - fonts-droid
+            - fonts-droid-fallback
       before_script:
         - git clone https://github.com/flutter/flutter.git
         - export PATH=`pwd`/flutter/bin:`pwd`/flutter/bin/cache/dart-sdk/bin:$PATH
@@ -34,7 +34,7 @@ matrix:
             - llvm-toolchain-precise # for clang-format-5.0
           packages:
             - libstdc++6
-            - fonts-droid
+            - fonts-droid-fallback
             - clang-format-5.0
       before_script:
         - git clone https://github.com/flutter/flutter.git
@@ -59,7 +59,7 @@ matrix:
           packages:
             - lib32stdc++6 # https://github.com/flutter/flutter/issues/6207
             - libstdc++6
-            - fonts-droid
+            - fonts-droid-fallback
       before_script:
         - ./script/before_build_apks.sh
         - export ANDROID_HOME=`pwd`/android-sdk
@@ -82,7 +82,7 @@ matrix:
           packages:
             - lib32stdc++6 # https://github.com/flutter/flutter/issues/6207
             - libstdc++6
-            - fonts-droid
+            - fonts-droid-fallback
       before_script:
         - ./script/before_build_apks.sh
         - export ANDROID_HOME=`pwd`/android-sdk
