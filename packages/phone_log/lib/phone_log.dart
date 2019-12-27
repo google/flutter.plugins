@@ -11,7 +11,8 @@ import 'package:flutter/services.dart';
 /// permission dialog would not pop up.
 enum PermissionStatus { granted, denied, deniedAndCannotRequest }
 
-const channel = MethodChannel('github.com/jiajiabingcheng/phone_log');
+const MethodChannel channel =
+    MethodChannel('github.com/jiajiabingcheng/phone_log');
 
 /// Provide methods to access and fetch the phone log.
 class PhoneLog {
@@ -40,11 +41,12 @@ class PhoneLog {
     final String _startDate = startDate?.toString();
     final String _duration = duration?.toString();
 
-    final Iterable<Map> records = (await channel.invokeMethod('getPhoneLogs',
+    final Iterable<Map<dynamic, dynamic>> records = (await channel.invokeMethod(
+            'getPhoneLogs',
             <String, String>{"startDate": _startDate, "duration": _duration}))
-        ?.cast<Map>();
-    return records
-        ?.map((m) => new CallRecord.fromMap(m.cast<String, Object>()));
+        ?.cast<Map<dynamic, dynamic>>();
+    return records?.map((Map<dynamic, dynamic> m) =>
+        new CallRecord.fromMap(m.cast<String, Object>()));
   }
 }
 
@@ -69,9 +71,6 @@ class CallRecord {
     this.duration,
   });
 
-  String formattedNumber, number, callType;
-  int dateYear, dateMonth, dateDay, dateHour, dateMinute, dateSecond, duration;
-
   CallRecord.fromMap(Map<String, Object> m) {
     formattedNumber = m['formattedNumber'];
     number = m['number'];
@@ -84,5 +83,7 @@ class CallRecord {
     dateSecond = m['dateSecond'];
     duration = m['duration'];
   }
-}
 
+  String formattedNumber, number, callType;
+  int dateYear, dateMonth, dateDay, dateHour, dateMinute, dateSecond, duration;
+}
