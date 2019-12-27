@@ -12,7 +12,7 @@ matrix:
             - ubuntu-toolchain-r-test # if we don't specify this, the libstdc++6 we get is the wrong version
           packages:
             - libstdc++6
-            - fonts-droid
+            - fonts-droid-fallback
       before_script:
         - git clone https://github.com/flutter/flutter.git
         - export PATH=`pwd`/flutter/bin:`pwd`/flutter/bin/cache/dart-sdk/bin:$PATH
@@ -24,7 +24,7 @@ matrix:
     - os: linux
       env:
         - SHARD=Format+Test
-      jdk: oraclejdk8
+      jdk: openjdk8
       sudo: false
       addons:
         apt:
@@ -34,7 +34,7 @@ matrix:
             - llvm-toolchain-precise # for clang-format-5.0
           packages:
             - libstdc++6
-            - fonts-droid
+            - fonts-droid-fallback
             - clang-format-5.0
       before_script:
         - git clone https://github.com/flutter/flutter.git
@@ -49,7 +49,7 @@ matrix:
       env:
         - SHARD="Build example apks 1/2"
         - PLUGIN_SHARDING="--shardIndex 0 --shardCount 2"
-      jdk: oraclejdk8
+      jdk: openjdk8
       sudo: false
       addons:
         apt:
@@ -59,7 +59,7 @@ matrix:
           packages:
             - lib32stdc++6 # https://github.com/flutter/flutter/issues/6207
             - libstdc++6
-            - fonts-droid
+            - fonts-droid-fallback
       before_script:
         - ./script/before_build_apks.sh
         - export ANDROID_HOME=`pwd`/android-sdk
@@ -72,7 +72,7 @@ matrix:
       env:
         - SHARD="Build example apks 2/2"
         - PLUGIN_SHARDING="--shardIndex 1 --shardCount 2"
-      jdk: oraclejdk8
+      jdk: openjdk8
       sudo: false
       addons:
         apt:
@@ -82,7 +82,7 @@ matrix:
           packages:
             - lib32stdc++6 # https://github.com/flutter/flutter/issues/6207
             - libstdc++6
-            - fonts-droid
+            - fonts-droid-fallback
       before_script:
         - ./script/before_build_apks.sh
         - export ANDROID_HOME=`pwd`/android-sdk
@@ -96,7 +96,7 @@ matrix:
         - SHARD="Build example ipas 1/2"
         - PLUGIN_SHARDING="--shardIndex 0 --shardCount 2"
       language: generic
-      osx_image: xcode9.3
+      osx_image: xcode10.2
       before_script:
         - ./script/before_build_ipas.sh
         - export PATH=`pwd`/flutter/bin:`pwd`/flutter/bin/cache/dart-sdk/bin:$PATH
@@ -108,7 +108,7 @@ matrix:
         - SHARD="Build example ipas 2/2"
         - PLUGIN_SHARDING="--shardIndex 1 --shardCount 2"
       language: generic
-      osx_image: xcode9.3
+      osx_image: xcode10.2
       before_script:
         - ./script/before_build_ipas.sh
         - export PATH=`pwd`/flutter/bin:`pwd`/flutter/bin/cache/dart-sdk/bin:$PATH
