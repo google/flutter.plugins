@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:audiofileplayer/audiofileplayer.dart';
+import 'package:audiofileplayer/audio_system.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -53,7 +54,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    Audio.addMediaEventListener(_mediaEventListener);
+    AudioSystem.instance.addMediaEventListener(_mediaEventListener);
     // First card.
     _audio = Audio.load('assets/audio/printermanual.m4a',
         onComplete: () => setState(() => _audioPlaying = false),
@@ -80,7 +81,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void dispose() {
-    Audio.removeMediaEventListener(_mediaEventListener);
+    AudioSystem.instance.removeMediaEventListener(_mediaEventListener);
     _audio.dispose();
     if (_remoteAudio != null) {
       _remoteAudio.dispose();
@@ -134,7 +135,8 @@ class _MyAppState extends State<MyApp> {
       _stopBackgroundAudio();
     } else if (type == MediaActionType.seekTo) {
       _backgroundAudio.seek(mediaEvent.seekToPositionSeconds);
-      Audio.setPlaybackState(true, mediaEvent.seekToPositionSeconds);
+      AudioSystem.instance
+          .setPlaybackState(true, mediaEvent.seekToPositionSeconds);
     } else if (type == MediaActionType.skipForward) {
       final double skipIntervalSeconds = mediaEvent.skipIntervalSeconds;
       _logger.info(
@@ -148,7 +150,7 @@ class _MyAppState extends State<MyApp> {
     } else if (type == MediaActionType.custom) {
       if (mediaEvent.customEventId == replayButtonId) {
         _backgroundAudio.play();
-        Audio.setPlaybackState(true, 0.0);
+        AudioSystem.instance.setPlaybackState(true, 0.0);
       } else if (mediaEvent.customEventId == newReleasesButtonId) {
         _logger
             .info('New-releases button is not implemented in this exampe app.');
@@ -180,7 +182,7 @@ class _MyAppState extends State<MyApp> {
     setState(() => _backgroundAudioPlaying = true);
 
     final Uint8List imageBytes = await generateImageBytes();
-    Audio.setMetadata(AudioMetadata(
+    AudioSystem.instance.setMetadata(AudioMetadata(
         title: "Great title",
         artist: "Great artist",
         album: "Great album",
@@ -188,9 +190,10 @@ class _MyAppState extends State<MyApp> {
         durationSeconds: _backgroundAudioDurationSeconds,
         artBytes: imageBytes));
 
-    Audio.setPlaybackState(true, _backgroundAudioPositionSeconds);
+    AudioSystem.instance
+        .setPlaybackState(true, _backgroundAudioPositionSeconds);
 
-    Audio.setAndroidNotificationButtons(<dynamic>[
+    AudioSystem.instance.setAndroidNotificationButtons(<dynamic>[
       AndroidMediaButtonType.pause,
       AndroidMediaButtonType.stop,
       const AndroidCustomMediaButton(
@@ -199,7 +202,7 @@ class _MyAppState extends State<MyApp> {
       0
     ]);
 
-    Audio.setSupportedMediaActions(<MediaActionType>{
+    AudioSystem.instance.setSupportedMediaActions(<MediaActionType>{
       MediaActionType.playPause,
       MediaActionType.pause,
       MediaActionType.next,
@@ -214,9 +217,10 @@ class _MyAppState extends State<MyApp> {
     _backgroundAudio.pause();
     setState(() => _backgroundAudioPlaying = false);
 
-    Audio.setPlaybackState(false, _backgroundAudioPositionSeconds);
+    AudioSystem.instance
+        .setPlaybackState(false, _backgroundAudioPositionSeconds);
 
-    Audio.setAndroidNotificationButtons(<dynamic>[
+    AudioSystem.instance.setAndroidNotificationButtons(<dynamic>[
       AndroidMediaButtonType.play,
       AndroidMediaButtonType.stop,
       const AndroidCustomMediaButton(
@@ -225,7 +229,7 @@ class _MyAppState extends State<MyApp> {
       0
     ]);
 
-    Audio.setSupportedMediaActions(<MediaActionType>{
+    AudioSystem.instance.setSupportedMediaActions(<MediaActionType>{
       MediaActionType.playPause,
       MediaActionType.play,
       MediaActionType.next,
@@ -236,7 +240,7 @@ class _MyAppState extends State<MyApp> {
   void _stopBackgroundAudio() {
     _backgroundAudio.pause();
     setState(() => _backgroundAudioPlaying = false);
-    Audio.stopBackgroundDisplay();
+    AudioSystem.instance.stopBackgroundDisplay();
   }
 
   /// Generates a 200x200 png, with randomized colors, to use as art for the
@@ -428,7 +432,7 @@ class _MyAppState extends State<MyApp> {
               onChanged: (IosAudioCategory newValue) {
                 setState(() {
                   _iosAudioCategory = newValue;
-                  Audio.setIosAudioCategory(_iosAudioCategory);
+                  AudioSystem.instance.setIosAudioCategory(_iosAudioCategory);
                 });
               },
               items: IosAudioCategory.values.map((IosAudioCategory category) {

@@ -1,15 +1,15 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 import 'dart:typed_data';
 import 'dart:ui' show AppLifecycleState;
 
+import 'package:audiofileplayer/audio_system.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 import 'package:uuid/uuid.dart';
 
-final Logger _logger = Logger('audio');
+final Logger _logger = Logger('audiofileplayer');
 
 @visibleForTesting
 const String channelName = 'audiofileplayer';
@@ -33,37 +33,9 @@ const String onDurationCallback = 'onDuration';
 const String durationSecondsKey = 'duration_seconds';
 const String onPositionCallback = 'onPosition';
 const String positionSecondsKey = 'position_seconds';
-const String stopBackgroundDisplayMethod = 'stopBackgroundDisplay';
 const String errorCode = 'AudioPluginError';
 
-// Constants for iOS category.
-const String iosAudioCategoryMethod = 'iosAudioCategory';
-const String iosAudioCategoryKey = 'iosAudioCategory';
-const String iosAudioCategoryAmbientSolo = 'iosAudioCategoryAmbientSolo';
-const String iosAudioCategoryAmbientMixed = 'iosAudioCategoryAmbientMixed';
-const String iosAudioCategoryPlayback = 'iosAudioCategoryPlayback';
-
-// Constants for [setPlaybackState].
-const String setPlaybackStateMethod = 'setPlaybackState';
-const String playbackIsPlayingKey = 'playbackIsPlaying';
-const String playbackPositionSeconds = 'playbackPositionSeconds';
-
-// Constants for [AudioMetadata].
-const String setMetadataMethod = 'setMetadata';
-const String metadataIdKey = 'metadataId';
-const String metadataTitleKey = 'metadataTitle';
-const String metadataAlbumKey = 'metadataAlbum';
-const String metadataArtistKey = 'metadataArtist';
-const String metadataGenreKey = 'metadataGenre';
-const String metadataDurationSecondsKey = 'metadataDurationSeconds';
-const String metadataArtBytesKey = 'metadataArtBytes';
-
 // Constants for [MediaActionType] and [AndroidMediaButtonType].
-const String setSupportedMediaActionsMethod = 'setSupportedMediaActions';
-const String mediaActionsKey = 'mediaActions';
-const String setAndroidMediaButtonsMethod = 'setAndroidMediaButtons';
-const String mediaButtonsKey = 'mediaButtons';
-const String mediaCompactIndicesKey = 'mediaCompactIndices';
 const String onMediaEventCallback = 'onMediaEvent';
 const String mediaEventTypeKey = 'mediaEventType';
 const String mediaStop = 'stop';
@@ -84,38 +56,14 @@ const String mediaCustomTitleKey = 'customTitle';
 const String mediaCustomEventIdKey = 'customEventId';
 const String mediaCustomDrawableResourceKey = 'customDrawableResource';
 
-/// Represents audio playback category on iOS.
-///
-/// An 'ambient' category should be used for tasks like game audio, whereas
-/// the [playback] category should be used for tasks like music player playback.
-///
-/// Note that for background audio to work, the [playback] category must be
-/// used, and the [shouldPlayWhileAppPaused] flag must also be set.
-///
-/// See
-/// https://developer.apple.com/documentation/avfoundation/avaudiosessioncategory
-/// for more information.
-enum IosAudioCategory {
-  /// Audio is silenced by screen lock and the silent switch; audio will not mix
-  /// with other apps' audio.
-  ambientSolo,
-
-  /// Audio is silenced by screen lock and the silent switch; audio will mix
-  /// with other apps' (mixable) audio.
-  ambientMixed,
-
-  /// Audio is not silenced by screen lock or silent switch; audio will not mix
-  /// with other apps' audio.
-  ///
-  /// The default value.
-  playback
-}
+MethodChannel audioMethodChannel =
+    const MethodChannel(channelName)..setMethodCallHandler(Audio.handleMethodCall);
 
 /// Specifies an action that the OS's background audio system may support.
 ///
 /// Values are used both to request what actions are enabled (see
-/// [setSupportedMediaActionsMethod]), and to specify what types of events have
-/// been received (see [MediaEvent]).
+/// [AudioSystem.setSupportedMediaActionsMethod]), and to specify what types of
+/// events have been received (see [MediaEvent]).
 ///
 /// These inform both device displays (i.e. iOS lockscreen/control center) and
 /// external controllers (such as watches, auto displays, etc) on what controls
@@ -139,47 +87,14 @@ enum MediaActionType {
   seekForward,
   seekBackward,
 
-  /// Enables use of the seek bar.
+  /// Enables use seeking in the progress bar.
   seekTo,
+
   skipForward, // iOS only.
   skipBackward, // iOS only.
 
   /// Only used when receiving a MediaEvent from an Android custom button.
   custom
-}
-
-/// A button to be added to the Android notification display via
-/// [setAndroidMediaButtons].
-///
-/// These are the 'built-in' buttons, with icons provided by this plugin. Users
-/// may add additional custom buttons with [AndroidCustomMediaButton].
-///
-/// These will yield [MediaEvent]s with the equivalent [MediaActionType].
-enum AndroidMediaButtonType {
-  stop,
-  pause,
-  play,
-  next,
-  previous,
-  seekForward,
-  seekBackward,
-}
-
-/// A custom button to be added to the Android notification display via
-/// [setAndroidMediaButtons].
-class AndroidCustomMediaButton {
-  const AndroidCustomMediaButton(
-      this.title, this.eventId, this.drawableResource);
-
-  final String title;
-
-  /// A unique identifier for the button, which will be returned the
-  /// [MediaEvent.customEventId].
-  final String eventId;
-
-  /// The name of the Android icon; must be in the Android project's "drawable"
-  /// resource folder.
-  final String drawableResource;
 }
 
 /// Represents events received from the OS's background audio system (e.g. iOS
@@ -201,26 +116,6 @@ class MediaEvent {
 
   /// Set for [MediaActionType.skipForward] and [MediaActionType.skipBackward].
   final double skipIntervalSeconds;
-}
-
-/// Metadata, used for display in the OS background audio system.
-class AudioMetadata {
-  const AudioMetadata({
-    this.id,
-    this.title,
-    this.album,
-    this.artist,
-    this.genre,
-    this.durationSeconds,
-    this.artBytes,
-  });
-  final String id;
-  final String title;
-  final String artist;
-  final String album;
-  final String genre;
-  final double durationSeconds;
-  final Uint8List artBytes;
 }
 
 /// A plugin for audio playback.
@@ -340,9 +235,8 @@ class AudioMetadata {
 /// ```dart
 /// Audio.load('foo.wav', playInBackground = true);
 /// ```
-/// and use the [setPlaybackState], [setMetadata], [setSupportedMediaActions],
-/// and [setAndroidNotificationButtons] methods to communicate desired state and
-/// behavior to the OS's background audio system.
+/// and use all the methods in [AudioSystem] to communicate desired state and
+/// supported behavior to the OS's background audio system.
 class Audio with WidgetsBindingObserver {
   Audio._path(this._path, this._onComplete, this._onDuration, this._onPosition,
       this._onError, this._looping, this._playInBackground)
@@ -368,10 +262,6 @@ class Audio with WidgetsBindingObserver {
         _path = null {
     WidgetsBinding.instance.addObserver(this);
   }
-
-  @visibleForTesting
-  static final MethodChannel channel = const MethodChannel(channelName)
-    ..setMethodCallHandler(handleMethodCall);
 
   static final Uuid _uuid = Uuid();
 
@@ -431,16 +321,6 @@ class Audio with WidgetsBindingObserver {
 
   /// Set while there is playback to a specified point.
   double _endpointSeconds;
-
-  /// Send media events to the client for handling.
-  static final Set<ValueChanged<MediaEvent>> _mediaEventListeners =
-      <ValueChanged<MediaEvent>>{};
-
-  static void addMediaEventListener(ValueChanged<MediaEvent> listener) =>
-      _mediaEventListeners.add(listener);
-
-  static void removeMediaEventListener(ValueChanged<MediaEvent> listener) =>
-      _mediaEventListeners.remove(listener);
 
   /// Creates an Audio from an asset.
   ///
@@ -732,200 +612,6 @@ class Audio with WidgetsBindingObserver {
     }
   }
 
-  /// Inform the OS's background audio system about the playback state; used to
-  /// set the progress bar in lockscreen/notification.
-  ///
-  /// When using background audio, this should be called every time the playback
-  /// starts/stops, or there is discontinuity in playback progress (i.e. a seek
-  /// or loop restart). It should not be called regularly (i.e. do not call it
-  /// every second).
-  static void setPlaybackState(bool isPlaying, double positionSeconds) async {
-    try {
-      await channel.invokeMethod<dynamic>(setPlaybackStateMethod, {
-        playbackIsPlayingKey: isPlaying,
-        playbackPositionSeconds: positionSeconds
-      });
-    } on PlatformException catch (e) {
-      _logger.severe('setPlaybackState error, category: ', e);
-    }
-  }
-
-  /// Set the media metadata for display in the OS's background audio system.
-  ///
-  /// Different OS versions have different behaviors governing when and how
-  /// these are displayed. For best results, call this right when the intended
-  /// [Audio] starts playback.
-  static void setMetadata(AudioMetadata metadata) async {
-    try {
-      final Map<String, dynamic> metadataMap = <String, dynamic>{};
-      // Only add non-null values into [metadataMap].
-      if (metadata.id != null) {
-        metadataMap[metadataIdKey] = metadata.id;
-      }
-      if (metadata.title != null) {
-        metadataMap[metadataTitleKey] = metadata.title;
-      }
-      if (metadata.album != null) {
-        metadataMap[metadataAlbumKey] = metadata.album;
-      }
-      if (metadata.artist != null) {
-        metadataMap[metadataArtistKey] = metadata.artist;
-      }
-      if (metadata.genre != null) {
-        metadataMap[metadataGenreKey] = metadata.genre;
-      }
-      if (metadata.durationSeconds != null) {
-        metadataMap[metadataDurationSecondsKey] = metadata.durationSeconds;
-      }
-      if (metadata.artBytes != null) {
-        metadataMap[metadataArtBytesKey] = metadata.artBytes;
-      }
-
-      await channel.invokeMethod<dynamic>(setMetadataMethod, metadataMap);
-    } on PlatformException catch (e) {
-      _logger.severe('setMetadata error, category: ', e);
-    }
-  }
-
-  /// Set the supported actions in the OS's background audio system.
-  ///
-  /// Informs device displays and external controllers (e.g. watch/auto) on
-  /// what controls to display.
-  static void setSupportedMediaActions(Set<MediaActionType> actions,
-      {double skipIntervalSeconds}) async {
-    const Map<MediaActionType, String> mediaActionTypeToString =
-        <MediaActionType, String>{
-      MediaActionType.playPause: mediaPlayPause,
-      MediaActionType.pause: mediaPause,
-      MediaActionType.play: mediaPlay,
-      MediaActionType.next: mediaNext,
-      MediaActionType.previous: mediaPrevious,
-      MediaActionType.seekForward: mediaSeekForward,
-      MediaActionType.seekBackward: mediaSeekBackward,
-      MediaActionType.seekTo: mediaSeekTo,
-      MediaActionType.skipForward: mediaSkipForward,
-      MediaActionType.skipBackward: mediaSkipBackward,
-    };
-
-    final List<String> actionStrings = actions
-        .map((MediaActionType type) => mediaActionTypeToString[type])
-        .toList();
-
-    final Map<String, dynamic> map = <String, dynamic>{
-      mediaActionsKey: actionStrings
-    };
-
-    if (skipIntervalSeconds != null) {
-      map[mediaSkipIntervalSecondsKey] = skipIntervalSeconds;
-    }
-
-    await channel.invokeMethod<dynamic>(setSupportedMediaActionsMethod, map);
-  }
-
-  /// Specify buttons for display in the Android notification.
-  ///
-  /// [androidMediaButtons] is a List containing a mix of
-  /// [AndroidMediaButtonType] and [AndroidCustomMediaButton].
-  ///
-  /// [androidCompactIndices] signifies which indices of [androidMediaButtons]
-  /// should be shown in the 'compact' notification view. This has a max length
-  /// of three.
-  ///
-  /// Only supported on Android; no-op otherwise.
-  static void setAndroidNotificationButtons(List<dynamic> androidMediaButtons,
-      {List<int> androidCompactIndices}) async {
-    const Map<AndroidMediaButtonType, String> androidMediaButtonTypeToString =
-        <AndroidMediaButtonType, String>{
-      AndroidMediaButtonType.stop: mediaStop,
-      AndroidMediaButtonType.pause: mediaPause,
-      AndroidMediaButtonType.play: mediaPlay,
-      AndroidMediaButtonType.next: mediaNext,
-      AndroidMediaButtonType.previous: mediaPrevious,
-      AndroidMediaButtonType.seekForward: mediaSeekForward,
-      AndroidMediaButtonType.seekBackward: mediaSeekBackward,
-    };
-
-    if (!Platform.isAndroid) return;
-
-    try {
-      final List<dynamic> androidMediaButtonsData = androidMediaButtons == null
-          ? <dynamic>[]
-          : androidMediaButtons.map((dynamic buttonTypeOrCustomButton) {
-              if (buttonTypeOrCustomButton is AndroidMediaButtonType) {
-                final AndroidMediaButtonType buttonType =
-                    buttonTypeOrCustomButton;
-                return androidMediaButtonTypeToString[buttonType];
-              } else if (buttonTypeOrCustomButton is AndroidCustomMediaButton) {
-                final AndroidCustomMediaButton customMediaButton =
-                    buttonTypeOrCustomButton;
-                return <String, String>{
-                  mediaCustomTitleKey: customMediaButton.title,
-                  mediaCustomEventIdKey: customMediaButton.eventId,
-                  mediaCustomDrawableResourceKey:
-                      customMediaButton.drawableResource,
-                };
-              } else {
-                _logger.severe(
-                    'androidMediaButtons must only contain instances of '
-                    'AndroidMediaButtonType or AndroidCustomMediaButton');
-                return null;
-              }
-            }).toList();
-
-      await channel.invokeMethod<dynamic>(
-          setAndroidMediaButtonsMethod, <String, dynamic>{
-        mediaButtonsKey: androidMediaButtonsData,
-        mediaCompactIndicesKey: androidCompactIndices
-      });
-    } on PlatformException catch (e) {
-      _logger.severe('setAndroidMediaButtonsMethod error', e);
-    }
-  }
-
-  /// Clears the display of the OS's background audio display.
-  ///
-  /// On Android, this dismisses the notification (and clears all Android
-  /// media buttons, metadata, and supported actions). You will need to re-set
-  /// those elements, and call [Audio.play()] on a background-enabled
-  /// [Audio], to bring back the notification.
-  ///
-  /// On iOS, this clears the supported controls and metadata from the
-  /// lockscreen/control center. However, the lockscreen will continue to
-  /// display an empty set of controls with the name of the app. Call
-  /// [setMetadata] or [setSupportedMediaActions] to bring back the display.
-  ///
-  /// Note that any background audio playback will continue. On Android, this
-  /// means that audio will continue despite no visible notification from a
-  /// foreground Service; this appears to be an undocumented behavior of
-  /// Android's MediaBrowserService, in that it keeps the connected Activity
-  /// (and its associated Dart process) active.
-  static void stopBackgroundDisplay() async {
-    try {
-      await channel.invokeMethod<dynamic>(stopBackgroundDisplayMethod);
-    } on PlatformException catch (e) {
-      _logger.severe('stopBackgroundDisplay error', e);
-    }
-  }
-
-  /// Sets the iOS audio category.
-  ///
-  /// Only supported on iOS; no-op otherwise.
-  static Future<void> setIosAudioCategory(IosAudioCategory category) async {
-    const Map<IosAudioCategory, String> categoryToString =
-        <IosAudioCategory, String>{
-      IosAudioCategory.ambientSolo: iosAudioCategoryAmbientSolo,
-      IosAudioCategory.ambientMixed: iosAudioCategoryAmbientMixed,
-      IosAudioCategory.playback: iosAudioCategoryPlayback
-    };
-    if (!Platform.isIOS) return;
-    try {
-      await channel.invokeMethod<dynamic>(iosAudioCategoryMethod,
-          <String, dynamic>{iosAudioCategoryKey: categoryToString[category]});
-    } on PlatformException catch (e) {
-      _logger.severe('setIosAudioCategory error, category: $category', e);
-    }
-  }
-
   /// Sends method call for starting playback.
   Future<void> _playNative(bool playFromStart, double endpointSeconds) async {
     try {
@@ -1024,7 +710,7 @@ class Audio with WidgetsBindingObserver {
   static Future<void> _sendMethodCall(String audioId, String method,
       [dynamic arguments]) async {
     try {
-      await channel.invokeMethod<dynamic>(method, arguments);
+      await audioMethodChannel.invokeMethod<dynamic>(method, arguments);
     } on PlatformException catch (e) {
       _logger.severe(
           '_sendMethodCall error: audioId: $audioId method: $method', e);
@@ -1052,37 +738,7 @@ class Audio with WidgetsBindingObserver {
         _onPositionNative(audioId, positionSeconds);
         break;
       case onMediaEventCallback:
-        final String mediaEventTypeString = arguments[mediaEventTypeKey];
-        const Map<String, MediaActionType> stringToMediaActionType =
-            <String, MediaActionType>{
-          mediaPause: MediaActionType.pause,
-          mediaPlay: MediaActionType.play,
-          mediaPlayPause: MediaActionType.playPause,
-          mediaStop: MediaActionType.stop,
-          mediaNext: MediaActionType.next,
-          mediaPrevious: MediaActionType.previous,
-          mediaSeekForward: MediaActionType.seekForward,
-          mediaSeekBackward: MediaActionType.seekBackward,
-          mediaSeekTo: MediaActionType.seekTo,
-          mediaSkipForward: MediaActionType.skipForward,
-          mediaSkipBackward: MediaActionType.skipBackward,
-          mediaCustom: MediaActionType.custom
-        };
-        final MediaActionType type =
-            stringToMediaActionType[mediaEventTypeString];
-        if (type == null) {
-          _logger.severe(
-              'Unknown MediaActionType for string $mediaEventTypeString');
-          return;
-        }
-        final MediaEvent event = MediaEvent(type,
-            customEventId: arguments[mediaCustomEventIdKey],
-            seekToPositionSeconds: arguments[mediaSeekToPositionSecondsKey],
-            skipIntervalSeconds: arguments[mediaSkipIntervalSecondsKey]);
-        for (final ValueChanged<MediaEvent> mediaEventListener
-            in _mediaEventListeners) {
-          mediaEventListener(event);
-        }
+        AudioSystem.instance.handleNativeMediaEventCallback(arguments);
         break;
       default:
         _logger.severe('Unknown method ${call.method}');

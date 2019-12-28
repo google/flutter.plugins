@@ -17,6 +17,6 @@ A Flutter plugin for audio playback.
   s.requires_arc = true
   s.dependency 'Flutter'
 
-  s.platform = :ios, '8.0'
+  s.platform = :ios, '10.0'
 end
 

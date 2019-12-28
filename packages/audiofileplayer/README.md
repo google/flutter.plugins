@@ -83,7 +83,7 @@ or
 
 
 ####Android
-To use the plugin's custom foreground service, add this within the <\manifest\> tag of your app's AndroidManifest.xml...
+To use the plugin's custom foreground service, add this within the <manifest\> tag of your app's AndroidManifest.xml...
 ```xml
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 ```
@@ -123,16 +123,16 @@ It is up to you to communicate information to the OS, in order to:
 * inform progress bars for display. 
 * for Android, specify buttons within the notification.
 
-Communicating with the OS's media system is covered by these methods. See audiofileplayer.dart for full documentation. See the example app for a complete example using all of these.
+Communicating with the OS's media system is covered by these methods on the AudioSystem singleton instance. See audio_system.dart for full documentation. See the example app for a complete example using all of these.
 
 ```dart
-static void setPlaybackState(bool isPlaying, double positionSeconds);
-static void setMetadata(AudioMetadata metadata);
-static void setSupportedMediaActions(Set<MediaActionType> actions,;
+void setPlaybackState(bool isPlaying, double positionSeconds);
+void setMetadata(AudioMetadata metadata);
+void setSupportedMediaActions(Set<MediaActionType> actions,;
       {double skipIntervalSeconds});
-static void setAndroidNotificationButtons(List<dynamic> androidMediaButtons,
+void setAndroidNotificationButtons(List<dynamic> androidMediaButtons,
       {List<int> androidCompactIndices})
-static void stopBackgroundDisplay();      
+void stopBackgroundDisplay();
 ```
 
 ## Additional platform-specific notes.
