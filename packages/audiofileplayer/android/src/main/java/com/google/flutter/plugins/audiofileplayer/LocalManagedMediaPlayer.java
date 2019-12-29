@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
 import android.os.Build;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -25,7 +24,9 @@ class LocalManagedMediaPlayer extends ManagedMediaPlayer {
    * <p>Callers must subsequently set a data source and call {@link MediaPlayer#prepare()}.
    */
   private LocalManagedMediaPlayer(
-      String audioId, AudiofileplayerPlugin parentAudioPlugin, boolean looping,
+      String audioId,
+      AudiofileplayerPlugin parentAudioPlugin,
+      boolean looping,
       boolean playInBackground)
       throws IllegalArgumentException, IOException {
     super(audioId, parentAudioPlugin, looping, playInBackground);
@@ -54,12 +55,12 @@ class LocalManagedMediaPlayer extends ManagedMediaPlayer {
   /**
    * Create a ManagedMediaPlayer from a byte array.
    *
-   * Uses {@link android.media.MediaPlayer#setDataSource(android.media.MediaDataSource)} if available.
-   * Otherwise falls back to writing the byte[] to disk and reading it back.
+   * <p>Uses {@link android.media.MediaPlayer#setDataSource(android.media.MediaDataSource)} if
+   * available. Otherwise falls back to writing the byte[] to disk and reading it back.
    *
    * @throws IllegalArgumentException if BufferMediaDataSource is invalid.
-   * @throws IOException if underlying MediaPlayer cannot load BufferMediaDataSource
-   * or FileDescriptor.
+   * @throws IOException if underlying MediaPlayer cannot load BufferMediaDataSource or
+   *     FileDescriptor.
    */
   public LocalManagedMediaPlayer(
       String audioId,
@@ -75,7 +76,7 @@ class LocalManagedMediaPlayer extends ManagedMediaPlayer {
     } else {
       // On older SDK versions, write the byte[] to disk, then read as FileDescriptor.
       File tempAudioFile =
-              File.createTempFile(UUID.randomUUID().toString(), null, context.getCacheDir());
+          File.createTempFile(UUID.randomUUID().toString(), null, context.getCacheDir());
       tempAudioFile.deleteOnExit();
       FileOutputStream fos = new FileOutputStream(tempAudioFile);
       fos.write(audioBytes);

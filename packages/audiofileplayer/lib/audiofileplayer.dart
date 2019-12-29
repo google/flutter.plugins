@@ -56,8 +56,8 @@ const String mediaCustomTitleKey = 'customTitle';
 const String mediaCustomEventIdKey = 'customEventId';
 const String mediaCustomDrawableResourceKey = 'customDrawableResource';
 
-MethodChannel audioMethodChannel =
-    const MethodChannel(channelName)..setMethodCallHandler(Audio.handleMethodCall);
+MethodChannel audioMethodChannel = const MethodChannel(channelName)
+  ..setMethodCallHandler(Audio.handleMethodCall);
 
 /// Specifies an action that the OS's background audio system may support.
 ///

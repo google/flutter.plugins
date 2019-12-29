@@ -43,8 +43,11 @@ abstract class ManagedMediaPlayer
         }
       };
 
-  protected ManagedMediaPlayer(String audioId, AudiofileplayerPlugin parentAudioPlugin,
-                               boolean looping, boolean playInBackground) {
+  protected ManagedMediaPlayer(
+      String audioId,
+      AudiofileplayerPlugin parentAudioPlugin,
+      boolean looping,
+      boolean playInBackground) {
     this.parentAudioPlugin = parentAudioPlugin;
     this.audioId = audioId;
     this.playInBackground = playInBackground;
