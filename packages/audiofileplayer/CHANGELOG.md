@@ -1,3 +1,6 @@
+## 1.1.1 - 28 Dec 2019
+  * README tweaks.
+
 ## 1.1.0 - 24 Dec 2019
   * Proper background audio on Android (using MediaBrowserService).
   * Caller can set supported media actions, metadata, and Android notification buttons.
