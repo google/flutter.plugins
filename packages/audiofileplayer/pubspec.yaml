@@ -20,5 +20,9 @@ dev_dependencies:
 
 flutter:
   plugin:
-    androidPackage: com.google.flutter.plugins.audiofileplayer
-    pluginClass: AudiofileplayerPlugin
+    platforms:
+      android:
+        package: com.google.flutter.plugins.audiofileplayer
+        pluginClass: AudiofileplayerPlugin
+      ios:
+        pluginClass: AudiofileplayerPlugin
