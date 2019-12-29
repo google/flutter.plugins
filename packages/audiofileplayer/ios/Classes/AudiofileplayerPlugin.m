@@ -1,6 +1,6 @@
+#import "AudiofileplayerPlugin.h"
 #import <AVFoundation/AVFoundation.h>
 #import <MediaPlayer/MediaPlayer.h>
-#import "AudiofileplayerPlugin.h"
 #import "ManagedPlayer.h"
 
 static NSString *const kChannel = @"audiofileplayer";
@@ -66,7 +66,7 @@ static NSString *const kMediaSkipForward = @"skipForward";
 static NSString *const kMediaSkipBackward = @"skipBackward";
 static NSString *const kMediaSkipIntervalSeconds = @"skipIntervalSeconds";
 
-@interface AudiofileplayerPlugin () <FLTManagedPlayerDelegate>
+@interface AudiofileplayerPlugin ()<FLTManagedPlayerDelegate>
 @end
 
 @implementation AudiofileplayerPlugin {
@@ -79,8 +79,8 @@ static NSString *const kMediaSkipIntervalSeconds = @"skipIntervalSeconds";
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar> *)registrar {
   FlutterMethodChannel *channel =
       [FlutterMethodChannel methodChannelWithName:kChannel binaryMessenger:[registrar messenger]];
-  AudiofileplayerPlugin *instance = [[AudiofileplayerPlugin alloc] initWithRegistrar:registrar
-                                                                             channel:channel];
+  AudiofileplayerPlugin *instance =
+      [[AudiofileplayerPlugin alloc] initWithRegistrar:registrar channel:channel];
   [registrar addMethodCallDelegate:instance channel:channel];
   [registrar addApplicationDelegate:instance];
 }
@@ -96,8 +96,7 @@ static NSString *const kMediaSkipIntervalSeconds = @"skipIntervalSeconds";
     [self addCommandHandlers];
     [self disableCommandHandlers];
     // Set audio category to initial default of 'playback'.
-    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback
-                                           error:nil];
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
   }
   return self;
 }
@@ -110,7 +109,7 @@ static NSString *const kMediaSkipIntervalSeconds = @"skipIntervalSeconds";
   NSLog(@"handleMethodCall: method = %@", call.method);
 
   if ([call.method isEqualToString:kLoadMethod]) {
-     // Loading an audio instance.
+    // Loading an audio instance.
     [self handleLoadWithCall:call result:result];
     return;
   } else if ([call.method isEqualToString:kAudioCategoryMethod]) {
@@ -121,7 +120,8 @@ static NSString *const kMediaSkipIntervalSeconds = @"skipIntervalSeconds";
       category = AVAudioSessionCategorySoloAmbient;
     } else if ([categoryString isEqualToString:kAudioCategoryAmbientMixed]) {
       category = AVAudioSessionCategoryAmbient;
-    } if ([categoryString isEqualToString:kAudioCategoryPlayback]) {
+    }
+    if ([categoryString isEqualToString:kAudioCategoryPlayback]) {
       category = AVAudioSessionCategoryPlayback;
     }
     [[AVAudioSession sharedInstance] setCategory:category error:nil];
@@ -320,8 +320,9 @@ static NSString *const kMediaSkipIntervalSeconds = @"skipIntervalSeconds";
                                              action:@selector(handleSeekForwardCommand:)];
   [remoteCommandCenter.seekBackwardCommand addTarget:self
                                               action:@selector(handleSeekBackwardCommand:)];
-  [remoteCommandCenter.changePlaybackPositionCommand addTarget:self
-                                                        action:@selector(handleChangePlaybackPositionCommand:)];
+  [remoteCommandCenter.changePlaybackPositionCommand
+      addTarget:self
+         action:@selector(handleChangePlaybackPositionCommand:)];
   [remoteCommandCenter.skipForwardCommand addTarget:self
                                              action:@selector(handleSkipForwardCommand:)];
   [remoteCommandCenter.skipBackwardCommand addTarget:self
@@ -332,9 +333,9 @@ static NSString *const kMediaSkipIntervalSeconds = @"skipIntervalSeconds";
   MPRemoteCommandCenter *remoteCommandCenter = [MPRemoteCommandCenter sharedCommandCenter];
   remoteCommandCenter.togglePlayPauseCommand.enabled = NO;
   remoteCommandCenter.playCommand.enabled = NO;
-  remoteCommandCenter.pauseCommand.enabled  = NO;
+  remoteCommandCenter.pauseCommand.enabled = NO;
   remoteCommandCenter.nextTrackCommand.enabled = NO;
-  remoteCommandCenter.previousTrackCommand.enabled  = NO;
+  remoteCommandCenter.previousTrackCommand.enabled = NO;
   remoteCommandCenter.seekForwardCommand.enabled = NO;
   remoteCommandCenter.seekBackwardCommand.enabled = NO;
   remoteCommandCenter.changePlaybackPositionCommand.enabled = NO;
@@ -378,11 +379,11 @@ static NSString *const kMediaSkipIntervalSeconds = @"skipIntervalSeconds";
   remoteCommandCenter.skipBackwardCommand.enabled =
       [mediaActionTypes containsObject:kMediaSkipBackward];
   if (skipIntervalNumber) {
-    remoteCommandCenter.skipForwardCommand.preferredIntervals = @[skipIntervalNumber];
-    remoteCommandCenter.skipBackwardCommand.preferredIntervals =@[skipIntervalNumber];
+    remoteCommandCenter.skipForwardCommand.preferredIntervals = @[ skipIntervalNumber ];
+    remoteCommandCenter.skipBackwardCommand.preferredIntervals = @[ skipIntervalNumber ];
   }
 }
-                           
+
 - (MPRemoteCommandHandlerStatus)handleTogglePlayPauseCommand:
     (MPRemoteCommandEvent *)remoteCommandEvent {
   [_channel invokeMethod:kOnMediaEventCallback arguments:@{kMediaEventType : kMediaPlayPause}];
@@ -426,17 +427,20 @@ static NSString *const kMediaSkipIntervalSeconds = @"skipIntervalSeconds";
     (MPChangePlaybackPositionCommandEvent *)changePlaybackPositionCommandEvent {
   NSTimeInterval positionSeconds = changePlaybackPositionCommandEvent.positionTime;
   [_channel invokeMethod:kOnMediaEventCallback
-               arguments:@{kMediaEventType : kMediaSeekTo,
-                           kMediaSeekToPositionSeconds:@(positionSeconds)
-                           }];
+               arguments:@{
+                 kMediaEventType : kMediaSeekTo,
+                 kMediaSeekToPositionSeconds : @(positionSeconds)
+               }];
   return MPRemoteCommandHandlerStatusSuccess;
 }
 
 - (MPRemoteCommandHandlerStatus)handleSkipForwardCommand:
     (MPSkipIntervalCommandEvent *)skipIntervalCommandEvent {
   [_channel invokeMethod:kOnMediaEventCallback
-               arguments:@{kMediaEventType : kMediaSkipForward,
-                           kMediaSkipIntervalSeconds:@(skipIntervalCommandEvent.interval)}];
+               arguments:@{
+                 kMediaEventType : kMediaSkipForward,
+                 kMediaSkipIntervalSeconds : @(skipIntervalCommandEvent.interval)
+               }];
   return MPRemoteCommandHandlerStatusSuccess;
 }
 
@@ -448,36 +452,36 @@ static NSString *const kMediaSkipIntervalSeconds = @"skipIntervalSeconds";
 
 #pragma mark - MPNowPlayingInfoCenter
 
-- (void) updateNowPlayingInfoFromPlaybackState:(NSDictionary *) playbackState {
+- (void)updateNowPlayingInfoFromPlaybackState:(NSDictionary *)playbackState {
   bool isPlaying = [playbackState[kPlaybackIsPlaying] boolValue];
   _nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? @(1.0) : @(0.0);
   _nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] =
       playbackState[kPlaybackPositionSeconds];
-  
+
   MPNowPlayingInfoCenter.defaultCenter.nowPlayingInfo = _nowPlayingInfo;
 }
 
-- (void) updateNowPlayingInfoFromMetadata:(NSDictionary *) metadata {
+- (void)updateNowPlayingInfoFromMetadata:(NSDictionary *)metadata {
   _nowPlayingInfo[MPMediaItemPropertyPersistentID] = metadata[kMetadataId];
   _nowPlayingInfo[MPMediaItemPropertyTitle] = metadata[kMetadataTitle];
   _nowPlayingInfo[MPMediaItemPropertyArtist] = metadata[kMetadataArtist];
   _nowPlayingInfo[MPMediaItemPropertyAlbumTitle] = metadata[kMetadataAlbum];
   _nowPlayingInfo[MPMediaItemPropertyGenre] = metadata[kMetadataGenre];
   _nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = metadata[kMetadataDurationSeconds];
-  
+
   if (metadata[kMetadataArtBytes]) {
     FlutterStandardTypedData *flutterData = metadata[kMetadataArtBytes];
     NSData *data = [flutterData data];
     UIImage *image = [UIImage imageWithData:data];
     _nowPlayingInfo[MPMediaItemPropertyArtwork] =
         [[MPMediaItemArtwork alloc] initWithBoundsSize:CGSizeMake(200.0, 200.0)
-                                requestHandler:^UIImage *(CGSize size) {
-                                                  return image;
-                                                }];
+                                        requestHandler:^UIImage *(CGSize size) {
+                                          return image;
+                                        }];
   } else {
     _nowPlayingInfo[MPMediaItemPropertyArtwork] = nil;
   }
-  
+
   MPNowPlayingInfoCenter.defaultCenter.nowPlayingInfo = _nowPlayingInfo;
 }
 
