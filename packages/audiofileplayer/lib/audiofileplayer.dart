@@ -1,15 +1,15 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 import 'dart:typed_data';
 import 'dart:ui' show AppLifecycleState;
 
+import 'package:audiofileplayer/audio_system.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 import 'package:uuid/uuid.dart';
 
-final Logger _logger = Logger('audio');
+final Logger _logger = Logger('audiofileplayer');
 
 @visibleForTesting
 const String channelName = 'audiofileplayer';
@@ -19,6 +19,7 @@ const String audioBytesKey = 'audioBytes';
 const String remoteUrlKey = 'remoteUrl';
 const String audioIdKey = 'audioId';
 const String loopingKey = 'looping';
+const String playInBackgroundKey = 'playInBackground';
 const String releaseMethod = 'release';
 const String playMethod = 'play';
 const String playFromStartKey = 'playFromStart';
@@ -34,37 +35,87 @@ const String onPositionCallback = 'onPosition';
 const String positionSecondsKey = 'position_seconds';
 const String errorCode = 'AudioPluginError';
 
-const String iosAudioCategoryMethod = 'iosAudioCategory';
-const String iosAudioCategoryKey = 'iosAudioCategory';
-const String iosAudioCategoryAmbientSolo = 'iosAudioCategoryAmbientSolo';
-const String iosAudioCategoryAmbientMixed = 'iosAudioCategoryAmbientMixed';
-const String iosAudioCategoryPlayback = 'iosAudioCategoryPlayback';
+// Constants for [MediaActionType] and [AndroidMediaButtonType].
+const String onMediaEventCallback = 'onMediaEvent';
+const String mediaEventTypeKey = 'mediaEventType';
+const String mediaStop = 'stop';
+const String mediaPause = 'pause';
+const String mediaPlay = 'play';
+const String mediaPlayPause = 'playPause';
+const String mediaNext = 'next';
+const String mediaPrevious = 'previous';
+const String mediaSeekForward = 'seekForward';
+const String mediaSeekBackward = 'seekBackward';
+const String mediaSeekTo = 'seekTo';
+const String mediaSeekToPositionSecondsKey = 'seekToPositionSeconds';
+const String mediaSkipForward = 'skipForward';
+const String mediaSkipBackward = 'skipBackward';
+const String mediaSkipIntervalSecondsKey = 'skipIntervalSeconds';
+const String mediaCustom = 'custom';
+const String mediaCustomTitleKey = 'customTitle';
+const String mediaCustomEventIdKey = 'customEventId';
+const String mediaCustomDrawableResourceKey = 'customDrawableResource';
 
-/// Represents audio playback category on iOS.
-///
-/// An 'ambient' category should be used for tasks like game audio, whereas
-/// the [playback] category should be used for tasks like music player playback.
-///
-/// Note that for background audio, the [shouldPlayWhileAppPaused] flag must
-/// also be set.
-///
-/// See
-/// https://developer.apple.com/documentation/avfoundation/avaudiosessioncategory
-/// for more information.
-enum IosAudioCategory {
-  /// Audio is silenced by screen lock and the silent switch; audio will not mix
-  /// with other apps' audio.
-  ambientSolo,
+MethodChannel audioMethodChannel =
+    const MethodChannel(channelName)..setMethodCallHandler(Audio.handleMethodCall);
 
-  /// Audio is silenced by screen lock and the silent switch; audio will mix
-  /// with other apps' (mixable) audio.
-  ambientMixed,
+/// Specifies an action that the OS's background audio system may support.
+///
+/// Values are used both to request what actions are enabled (see
+/// [AudioSystem.setSupportedMediaActionsMethod]), and to specify what types of
+/// events have been received (see [MediaEvent]).
+///
+/// These inform both device displays (i.e. iOS lockscreen/control center) and
+/// external controllers (such as watches, auto displays, etc) on what controls
+/// to show.
+///
+/// Note that not all actions are supported on both Android and iOS.
+///
+/// Not yet supported:
+/// - cross-platform functionality: ratings/like/dislike, repeat mode,
+///   shuffle mode.
+/// - Android-specific functionality: playFromMediaId, playFromSearch,
+///   skipToQueueItem, playFromUri.
+/// - iOS-specific functionality: bookmark, language.
+enum MediaActionType {
+  playPause,
+  pause,
+  play,
+  stop,
+  next,
+  previous,
+  seekForward,
+  seekBackward,
 
-  /// Audio is not silenced by screen lock or silent switch; audio will not mix
-  /// with other apps' audio.
-  ///
-  /// The default value.
-  playback
+  /// Enables use seeking in the progress bar.
+  seekTo,
+
+  skipForward, // iOS only.
+  skipBackward, // iOS only.
+
+  /// Only used when receiving a MediaEvent from an Android custom button.
+  custom
+}
+
+/// Represents events received from the OS's background audio system (e.g. iOS
+/// lockscreen/control center, bluetooth controllers, etc) and from Android
+/// buttons in the notification.
+class MediaEvent {
+  const MediaEvent(this.type,
+      {this.customEventId,
+      this.seekToPositionSeconds,
+      this.skipIntervalSeconds});
+
+  final MediaActionType type;
+
+  /// Set for [MediaActionType.custom].
+  final String customEventId;
+
+  /// Set for [MediaActionType.seekTo].
+  final double seekToPositionSeconds;
+
+  /// Set for [MediaActionType.skipForward] and [MediaActionType.skipBackward].
+  final double skipIntervalSeconds;
 }
 
 /// A plugin for audio playback.
@@ -177,9 +228,18 @@ enum IosAudioCategory {
 /// In both cases, [pause] or [removeCallbacks] will signal that the Audio
 /// instance need not stay alive (after [dispose]) to call its callbacks.
 /// The Audio instance and the parent State will be dealloced.
+///
+/// Background audio.
+/// See README.md for additional per-platform setup for background audio.
+/// Use the 'playInBackground' flag on Audio load.
+/// ```dart
+/// Audio.load('foo.wav', playInBackground = true);
+/// ```
+/// and use all the methods in [AudioSystem] to communicate desired state and
+/// supported behavior to the OS's background audio system.
 class Audio with WidgetsBindingObserver {
   Audio._path(this._path, this._onComplete, this._onDuration, this._onPosition,
-      this._onError, this._looping)
+      this._onError, this._looping, this._playInBackground)
       : _audioId = _uuid.v4(),
         _audioBytes = null,
         _remoteUrl = null {
@@ -187,7 +247,7 @@ class Audio with WidgetsBindingObserver {
   }
 
   Audio._byteData(ByteData byteData, this._onComplete, this._onDuration,
-      this._onPosition, this._onError, this._looping)
+      this._onPosition, this._onError, this._looping, this._playInBackground)
       : _audioId = _uuid.v4(),
         _audioBytes = Uint8List.view(byteData.buffer),
         _path = null,
@@ -196,16 +256,12 @@ class Audio with WidgetsBindingObserver {
   }
 
   Audio._remoteUrl(this._remoteUrl, this._onComplete, this._onDuration,
-      this._onPosition, this._onError, this._looping)
+      this._onPosition, this._onError, this._looping, this._playInBackground)
       : _audioId = _uuid.v4(),
         _audioBytes = null,
         _path = null {
     WidgetsBinding.instance.addObserver(this);
   }
-
-  @visibleForTesting
-  static final MethodChannel channel = const MethodChannel(channelName)
-    ..setMethodCallHandler(handleMethodCall);
 
   static final Uuid _uuid = Uuid();
 
@@ -244,11 +300,6 @@ class Audio with WidgetsBindingObserver {
   // callback.
   static final Map<String, Audio> _usingOnErrorAudios = <String, Audio>{};
 
-  /// Whether audio should continue playing while app is paused (i.e.
-  /// backgrounded). May be set at any time while the app is active, but only
-  /// has an effect when app is paused.
-  static bool shouldPlayWhileAppPaused = false;
-
   final String _path;
   final Uint8List _audioBytes;
   final String _remoteUrl;
@@ -262,6 +313,10 @@ class Audio with WidgetsBindingObserver {
   bool _looping;
   bool _playing = false;
   double _volume = 1.0;
+
+  /// Whether the [Audio] should continue playback when the app is backgrounded.
+  bool _playInBackground = false;
+
   bool _appPaused = false;
 
   /// Set while there is playback to a specified point.
@@ -276,10 +331,11 @@ class Audio with WidgetsBindingObserver {
       void onDuration(double duration),
       void onPosition(double position),
       void onError(String message),
-      bool looping = false}) {
-    final Audio audio =
-        Audio._path(path, onComplete, onDuration, onPosition, onError, looping)
-          .._load();
+      bool looping = false,
+      bool playInBackground = false}) {
+    final Audio audio = Audio._path(path, onComplete, onDuration, onPosition,
+        onError, looping, playInBackground)
+      .._load();
     return audio;
   }
 
@@ -292,9 +348,10 @@ class Audio with WidgetsBindingObserver {
       void onDuration(double duration),
       void onPosition(double position),
       void onError(String message),
-      bool looping = false}) {
-    final Audio audio = Audio._byteData(
-        byteData, onComplete, onDuration, onPosition, onError, looping)
+      bool looping = false,
+      bool playInBackground = false}) {
+    final Audio audio = Audio._byteData(byteData, onComplete, onDuration,
+        onPosition, onError, looping, playInBackground)
       .._load();
     return audio;
   }
@@ -311,10 +368,11 @@ class Audio with WidgetsBindingObserver {
       void onDuration(double duration),
       void onPosition(double position),
       void onError(String message),
-      bool looping = false}) {
+      bool looping = false,
+      bool playInBackground = false}) {
     if (Uri.tryParse(url) == null) return null;
-    final Audio audio = Audio._remoteUrl(
-        url, onComplete, onDuration, onPosition, onError, looping)
+    final Audio audio = Audio._remoteUrl(url, onComplete, onDuration,
+        onPosition, onError, looping, playInBackground)
       .._load();
     return audio;
   }
@@ -340,7 +398,8 @@ class Audio with WidgetsBindingObserver {
         audioBytesKey: _audioBytes,
         remoteUrlKey: _remoteUrl,
         audioIdKey: _audioId,
-        loopingKey: _looping
+        loopingKey: _looping,
+        playInBackgroundKey: _playInBackground
       });
     } on PlatformException catch (e) {
       // Note that exceptions during [_load] are assumed to have failed to
@@ -454,7 +513,7 @@ class Audio with WidgetsBindingObserver {
 
     // If app is paused and audio should not play, return early. On app resume,
     // the _playing flag will signify that audio should resume.
-    if (_appPaused && !shouldPlayWhileAppPaused) return;
+    if (_appPaused && !_playInBackground) return;
 
     await _playNative(playFromStart, endpointSeconds);
   }
@@ -542,33 +601,14 @@ class Audio with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
       _appPaused = true;
-      if (_playing && !shouldPlayWhileAppPaused) {
+      if (_playing && !_playInBackground) {
         _pauseNative();
       }
     } else if (state == AppLifecycleState.resumed) {
       _appPaused = false;
-      if (_playing && !shouldPlayWhileAppPaused) {
+      if (_playing && !_playInBackground) {
         _playNative(false, _endpointSeconds);
       }
-    }
-  }
-
-  /// Sets the iOS audio category.
-  ///
-  /// Only communicates with the underlying plugin on iOS; no-op otherwise.
-  static Future<void> setIosAudioCategory(IosAudioCategory category) async {
-    const Map<IosAudioCategory, String> categoryToString =
-        <IosAudioCategory, String>{
-      IosAudioCategory.ambientSolo: iosAudioCategoryAmbientSolo,
-      IosAudioCategory.ambientMixed: iosAudioCategoryAmbientMixed,
-      IosAudioCategory.playback: iosAudioCategoryPlayback
-    };
-    if (!Platform.isIOS) return;
-    try {
-      await channel.invokeMethod<dynamic>(iosAudioCategoryMethod,
-          <String, dynamic>{iosAudioCategoryKey: categoryToString[category]});
-    } on PlatformException catch (e) {
-      _logger.severe('setIosAudioCategory error, category: $category', e);
     }
   }
 
@@ -670,7 +710,7 @@ class Audio with WidgetsBindingObserver {
   static Future<void> _sendMethodCall(String audioId, String method,
       [dynamic arguments]) async {
     try {
-      await channel.invokeMethod<dynamic>(method, arguments);
+      await audioMethodChannel.invokeMethod<dynamic>(method, arguments);
     } on PlatformException catch (e) {
       _logger.severe(
           '_sendMethodCall error: audioId: $audioId method: $method', e);
@@ -696,6 +736,9 @@ class Audio with WidgetsBindingObserver {
       case onPositionCallback:
         final double positionSeconds = arguments[positionSecondsKey];
         _onPositionNative(audioId, positionSeconds);
+        break;
+      case onMediaEventCallback:
+        AudioSystem.instance.handleNativeMediaEventCallback(arguments);
         break;
       default:
         _logger.severe('Unknown method ${call.method}');

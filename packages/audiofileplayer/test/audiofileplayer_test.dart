@@ -17,8 +17,8 @@ void main() {
     setUp(() async {
       // Ensures that Audio objects are able to call WidgetBinder.instance.
       WidgetsFlutterBinding.ensureInitialized();
-      Audio.shouldPlayWhileAppPaused = false;
-      Audio.channel.setMockMethodCallHandler((MethodCall methodCall) async {
+      audioMethodChannel
+          .setMockMethodCallHandler((MethodCall methodCall) async {
         methodCalls.add(methodCall);
         if (_throwExceptionOnNextMethodCall) {
           _throwExceptionOnNextMethodCall = false;
@@ -278,8 +278,7 @@ void main() {
     });
 
     test('should continue to play audio while app is paused', () {
-      Audio.shouldPlayWhileAppPaused = true;
-      final Audio audio = Audio.load('foo.wav')
+      final Audio audio = Audio.load('foo.wav', playInBackground: true)
         ..play()
         ..dispose();
       // Mock app change from active to paused (i.e. user backgrounds app).

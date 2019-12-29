@@ -1,19 +1,30 @@
+import 'dart:io' show Platform;
+import 'dart:math';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
+import 'package:audiofileplayer/audiofileplayer.dart';
+import 'package:audiofileplayer/audio_system.dart';
+import 'package:logging/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
-import 'package:audiofileplayer/audiofileplayer.dart';
+final Logger _logger = Logger('audiofileplayer_example');
 
 void main() => runApp(MyApp());
 
+/// This app shows several use cases for the audiofileplayer plugin.
 class MyApp extends StatefulWidget {
   @override
   _MyAppState createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  // Preloaded audio data for the first card.
+  /// Identifiers for the two custom Android notification buttons.
+  static const String replayButtonId = 'replayButtonId';
+  static const String newReleasesButtonId = 'newReleasesButtonId';
+
+  /// Preloaded audio data for the first card.
   Audio _audio;
   bool _audioPlaying = false;
   double _audioDurationSeconds;
@@ -21,22 +32,30 @@ class _MyAppState extends State<MyApp> {
   double _audioVolume = 1.0;
   double _seekSliderValue = 0.0; // Normalized 0.0 - 1.0.
 
-  // On-the-fly audio data for the second card.
+  /// On-the-fly audio data for the second card.
   int _spawnedAudioCount = 0;
   ByteData _audioByteData;
 
-  // Remote url audio data for the third card.
+  /// Remote url audio data for the third card.
   Audio _remoteAudio;
   bool _remoteAudioPlaying = false;
   bool _remoteAudioLoading = false;
   String _remoteErrorMessage;
 
-  // The iOS audio category dropdown item in the fourth card.
+  /// Background audio data for the fourth card.
+  Audio _backgroundAudio;
+  bool _backgroundAudioPlaying;
+  double _backgroundAudioDurationSeconds;
+  double _backgroundAudioPositionSeconds = 0;
+
+  /// The iOS audio category dropdown item in the fifth card.
   IosAudioCategory _iosAudioCategory = IosAudioCategory.playback;
 
   @override
   void initState() {
     super.initState();
+    AudioSystem.instance.addMediaEventListener(_mediaEventListener);
+    // First card.
     _audio = Audio.load('assets/audio/printermanual.m4a',
         onComplete: () => setState(() => _audioPlaying = false),
         onDuration: (double durationSeconds) =>
@@ -45,16 +64,29 @@ class _MyAppState extends State<MyApp> {
               _audioPositionSeconds = positionSeconds;
               _seekSliderValue = _audioPositionSeconds / _audioDurationSeconds;
             }));
+    // Second card.
     _loadAudioByteData();
+    // Third card
     _loadRemoteAudio();
+    // Fourth card.
+    _backgroundAudio = Audio.load('assets/audio/printermanual.m4a',
+        onDuration: (double durationSeconds) =>
+            _backgroundAudioDurationSeconds = durationSeconds,
+        onPosition: (double positionSeconds) =>
+            _backgroundAudioPositionSeconds = positionSeconds,
+        looping: true,
+        playInBackground: true);
+    _backgroundAudioPlaying = false;
   }
 
   @override
   void dispose() {
+    AudioSystem.instance.removeMediaEventListener(_mediaEventListener);
     _audio.dispose();
     if (_remoteAudio != null) {
       _remoteAudio.dispose();
     }
+    _backgroundAudio.dispose();
     super.dispose();
   }
 
@@ -79,10 +111,51 @@ class _MyAppState extends State<MyApp> {
             ],
           ));
 
-  // convert double seconds to minutes:seconds
+  /// Convert double seconds to String minutes:seconds.
   static String _stringForSeconds(double seconds) {
     if (seconds == null) return null;
     return '${(seconds ~/ 60)}:${(seconds.truncate() % 60).toString().padLeft(2, '0')}';
+  }
+
+  /// Listener for transport control events from the OS.
+  ///
+  /// Note that this example app does not handle all event types.
+  void _mediaEventListener(MediaEvent mediaEvent) {
+    _logger.info('App received media event of type: ${mediaEvent.type}');
+    final MediaActionType type = mediaEvent.type;
+    if (type == MediaActionType.play) {
+      _resumeBackgroundAudio();
+    } else if (type == MediaActionType.pause) {
+      _pauseBackgroundAudio();
+    } else if (type == MediaActionType.playPause) {
+      _backgroundAudioPlaying
+          ? _pauseBackgroundAudio()
+          : _resumeBackgroundAudio();
+    } else if (type == MediaActionType.stop) {
+      _stopBackgroundAudio();
+    } else if (type == MediaActionType.seekTo) {
+      _backgroundAudio.seek(mediaEvent.seekToPositionSeconds);
+      AudioSystem.instance
+          .setPlaybackState(true, mediaEvent.seekToPositionSeconds);
+    } else if (type == MediaActionType.skipForward) {
+      final double skipIntervalSeconds = mediaEvent.skipIntervalSeconds;
+      _logger.info(
+          'Skip-forward event had skipIntervalSeconds $skipIntervalSeconds.');
+      _logger.info('Skip-forward is not implemented in this example app.');
+    } else if (type == MediaActionType.skipBackward) {
+      final double skipIntervalSeconds = mediaEvent.skipIntervalSeconds;
+      _logger.info(
+          'Skip-backward event had skipIntervalSeconds $skipIntervalSeconds.');
+      _logger.info('Skip-backward is not implemented in this example app.');
+    } else if (type == MediaActionType.custom) {
+      if (mediaEvent.customEventId == replayButtonId) {
+        _backgroundAudio.play();
+        AudioSystem.instance.setPlaybackState(true, 0.0);
+      } else if (mediaEvent.customEventId == newReleasesButtonId) {
+        _logger
+            .info('New-releases button is not implemented in this exampe app.');
+      }
+    }
   }
 
   void _loadAudioByteData() async {
@@ -102,6 +175,113 @@ class _MyAppState extends State<MyApp> {
               _remoteAudioPlaying = false;
               _remoteAudioLoading = false;
             }));
+  }
+
+  Future<void> _resumeBackgroundAudio() async {
+    _backgroundAudio.resume();
+    setState(() => _backgroundAudioPlaying = true);
+
+    final Uint8List imageBytes = await generateImageBytes();
+    AudioSystem.instance.setMetadata(AudioMetadata(
+        title: "Great title",
+        artist: "Great artist",
+        album: "Great album",
+        genre: "Great genre",
+        durationSeconds: _backgroundAudioDurationSeconds,
+        artBytes: imageBytes));
+
+    AudioSystem.instance
+        .setPlaybackState(true, _backgroundAudioPositionSeconds);
+
+    AudioSystem.instance.setAndroidNotificationButtons(<dynamic>[
+      AndroidMediaButtonType.pause,
+      AndroidMediaButtonType.stop,
+      const AndroidCustomMediaButton(
+          'replay', replayButtonId, 'ic_replay_black_36dp')
+    ], androidCompactIndices: <int>[
+      0
+    ]);
+
+    AudioSystem.instance.setSupportedMediaActions(<MediaActionType>{
+      MediaActionType.playPause,
+      MediaActionType.pause,
+      MediaActionType.next,
+      MediaActionType.previous,
+      MediaActionType.skipForward,
+      MediaActionType.skipBackward,
+      MediaActionType.seekTo,
+    }, skipIntervalSeconds: 30);
+  }
+
+  void _pauseBackgroundAudio() {
+    _backgroundAudio.pause();
+    setState(() => _backgroundAudioPlaying = false);
+
+    AudioSystem.instance
+        .setPlaybackState(false, _backgroundAudioPositionSeconds);
+
+    AudioSystem.instance.setAndroidNotificationButtons(<dynamic>[
+      AndroidMediaButtonType.play,
+      AndroidMediaButtonType.stop,
+      const AndroidCustomMediaButton(
+          'new releases', newReleasesButtonId, 'ic_new_releases_black_36dp'),
+    ], androidCompactIndices: <int>[
+      0
+    ]);
+
+    AudioSystem.instance.setSupportedMediaActions(<MediaActionType>{
+      MediaActionType.playPause,
+      MediaActionType.play,
+      MediaActionType.next,
+      MediaActionType.previous,
+    });
+  }
+
+  void _stopBackgroundAudio() {
+    _backgroundAudio.pause();
+    setState(() => _backgroundAudioPlaying = false);
+    AudioSystem.instance.stopBackgroundDisplay();
+  }
+
+  /// Generates a 200x200 png, with randomized colors, to use as art for the
+  /// notification/lockscreen.
+  static Future<Uint8List> generateImageBytes() async {
+    // Random color generation methods: pick contrasting hues.
+    final Random random = Random();
+    final double bgHue = random.nextDouble() * 360;
+    final double fgHue = (bgHue + 180.0) % 360;
+    final HSLColor bgHslColor =
+        HSLColor.fromAHSL(1.0, bgHue, random.nextDouble() * .5 + .5, .5);
+    final HSLColor fgHslColor =
+        HSLColor.fromAHSL(1.0, fgHue, random.nextDouble() * .5 + .5, .5);
+
+    final Size size = const Size(200.0, 200.0);
+    final Offset center = const Offset(100.0, 100.0);
+    final ui.PictureRecorder recorder = ui.PictureRecorder();
+    final Rect rect = Offset.zero & size;
+    final Canvas canvas = Canvas(recorder, rect);
+    final Paint bgPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = bgHslColor.toColor();
+    final Paint fgPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = fgHslColor.toColor()
+      ..strokeWidth = 8;
+    // Draw background color.
+    canvas.drawRect(rect, bgPaint);
+    // Draw 5 inset squares around the center.
+    for (int i = 0; i < 5; i++) {
+      canvas.drawRect(
+          Rect.fromCenter(center: center, width: i * 40.0, height: i * 40.0),
+          fgPaint);
+    }
+    // Render to image, then compress to PNG ByteData, then return as Uint8List.
+    final ui.Image image = await recorder
+        .endRecording()
+        .toImage(size.width.toInt(), size.height.toInt());
+    final ByteData encodedImageData =
+        await image.toByteData(format: ui.ImageByteFormat.png);
+    return encodedImageData.buffer.asUint8List();
   }
 
   // Creates a card, out of column child widgets. Injects vertical padding
@@ -129,7 +309,7 @@ class _MyAppState extends State<MyApp> {
       body: ListView(children: <Widget>[
         // A card controlling a pre-loaded (on app start) audio object.
         _cardWrapper(<Widget>[
-          const Text('Preloaded asset audio, with transport controls.'),
+          const Text('Example 1: preloaded asset audio.'),
           Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
             _transportButtonWithTitle('play from start', false, () {
               _audio.play();
@@ -177,7 +357,7 @@ class _MyAppState extends State<MyApp> {
         ]),
         _cardWrapper(<Widget>[
           const Text(
-            'Spawn overlapping one-shot audio playback.\n(tap multiple times)',
+            'Example 2: one-shot audio playback.\nTap multiple times to spawn overlapping instances.',
             textAlign: TextAlign.center,
           ),
           Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
@@ -205,7 +385,7 @@ class _MyAppState extends State<MyApp> {
           Text('Spawned audio count: $_spawnedAudioCount'),
         ]),
         _cardWrapper(<Widget>[
-          const Text('Play remote stream'),
+          const Text('Example 3: play remote stream'),
           _transportButtonWithTitle(
               'resume/pause NPR (KQED) live stream',
               _remoteAudioPlaying,
@@ -233,30 +413,36 @@ class _MyAppState extends State<MyApp> {
               : Text(_remoteAudioLoading ? 'loading...' : 'loaded')
         ]),
         _cardWrapper(<Widget>[
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: <Widget>[
-            const Text('Enable background playback:'),
-            Checkbox(
-                value: Audio.shouldPlayWhileAppPaused,
-                onChanged: (bool isOn) =>
-                    setState(() => Audio.shouldPlayWhileAppPaused = isOn))
-          ]),
-          const Text('(iOS only) iOS audio category:'),
-          DropdownButton<IosAudioCategory>(
-            value: _iosAudioCategory,
-            onChanged: (IosAudioCategory newValue) {
-              setState(() {
-                _iosAudioCategory = newValue;
-                Audio.setIosAudioCategory(_iosAudioCategory);
-              });
-            },
-            items: IosAudioCategory.values.map((IosAudioCategory category) {
-              return DropdownMenuItem<IosAudioCategory>(
-                value: category,
-                child: Text(category.toString()),
-              );
-            }).toList(),
-          )
+          const Text(
+            'Example 4: background playback with notification/lockscreen data.',
+            textAlign: TextAlign.center,
+          ),
+          _transportButtonWithTitle(
+              _backgroundAudioPlaying ? 'pause' : 'resume',
+              _backgroundAudioPlaying,
+              () => _backgroundAudioPlaying
+                  ? _pauseBackgroundAudio()
+                  : _resumeBackgroundAudio()),
         ]),
+        if (Platform.isIOS)
+          _cardWrapper(<Widget>[
+            const Text('(iOS only) iOS audio category:'),
+            DropdownButton<IosAudioCategory>(
+              value: _iosAudioCategory,
+              onChanged: (IosAudioCategory newValue) {
+                setState(() {
+                  _iosAudioCategory = newValue;
+                  AudioSystem.instance.setIosAudioCategory(_iosAudioCategory);
+                });
+              },
+              items: IosAudioCategory.values.map((IosAudioCategory category) {
+                return DropdownMenuItem<IosAudioCategory>(
+                  value: category,
+                  child: Text(category.toString()),
+                );
+              }).toList(),
+            )
+          ]),
       ]),
     ));
   }

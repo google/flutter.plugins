@@ -46,11 +46,11 @@ class RemoteManagedMediaPlayer extends ManagedMediaPlayer
    * @throws IOException if underlying MediaPlayer cannot load it as its DataSource.
    */
   public RemoteManagedMediaPlayer(
-      String audioId, String remoteUrl, AudiofileplayerPlugin parentAudioPlugin, boolean looping)
+      String audioId, String remoteUrl, AudiofileplayerPlugin parentAudioPlugin, boolean looping,
+      boolean playInBackground)
       throws IOException {
-    super(audioId, parentAudioPlugin);
+    super(audioId, parentAudioPlugin, looping, playInBackground);
     player.setDataSource(remoteUrl);
-    player.setLooping(looping);
     player.setOnCompletionListener(this);
     player.setOnPreparedListener(this);
     player.setOnErrorListener(this);

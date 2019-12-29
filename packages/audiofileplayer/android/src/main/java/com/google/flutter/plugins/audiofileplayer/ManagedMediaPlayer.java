@@ -20,6 +20,7 @@ abstract class ManagedMediaPlayer
 
   protected final AudiofileplayerPlugin parentAudioPlugin;
   protected final String audioId;
+  protected final boolean playInBackground;
   protected final MediaPlayer player;
   final Handler handler;
   final Runnable pauseAtEndpointRunnable;
@@ -42,10 +43,14 @@ abstract class ManagedMediaPlayer
         }
       };
 
-  protected ManagedMediaPlayer(String audioId, AudiofileplayerPlugin parentAudioPlugin) {
+  protected ManagedMediaPlayer(String audioId, AudiofileplayerPlugin parentAudioPlugin,
+                               boolean looping, boolean playInBackground) {
     this.parentAudioPlugin = parentAudioPlugin;
     this.audioId = audioId;
+    this.playInBackground = playInBackground;
     player = new MediaPlayer();
+    player.setLooping(looping);
+
     pauseAtEndpointRunnable = new PauseAtEndpointRunnable(this);
 
     handler = new Handler();

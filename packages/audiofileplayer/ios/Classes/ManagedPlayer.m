@@ -261,7 +261,7 @@ static float const kTimerUpdateIntervalSeconds = 0.25;
       case AVPlayerItemStatusFailed: {
         if (item.error.code == -11800) {
           NSLog(@"It looks like you are failing to load a remote asset. You probably requested a "
-                @"non-http url, and didn't specify arbitrary url loading in your app transport "
+                @"non-https url, and didn't specify arbitrary url loading in your app transport "
                 @"securty settings. Add an NSAppTransportSecurity entry to your Info.plist.");
         }
         _remoteLoadHandler(NO);

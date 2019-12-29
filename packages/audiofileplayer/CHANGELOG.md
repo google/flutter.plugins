@@ -1,3 +1,10 @@
+## 1.1.0 - 24 Dec 2019
+  * Proper background audio on Android (using MediaBrowserService).
+  * Caller can set supported media actions, metadata, and Android notification buttons.
+  * Minor breaking change: 'shouldPlayInBackground' static flag is removed, and a per-Audio 'playInBackground' flag is
+    used on each Audio load.
+  * Expanded documentation.
+
 ## 1.0.3 - 2 Dec 2019
 
   * Support older versions of Android.
