@@ -7,7 +7,7 @@ NSTimeInterval const FLTManagedPlayerPlayToEnd = -1.0;
 static NSString *const kKeyPathStatus = @"status";
 static float const kTimerUpdateIntervalSeconds = 0.25;
 
-@interface FLTManagedPlayer ()<AVAudioPlayerDelegate>
+@interface FLTManagedPlayer () <AVAudioPlayerDelegate>
 @end
 
 @implementation FLTManagedPlayer {
@@ -260,10 +260,9 @@ static float const kTimerUpdateIntervalSeconds = 0.25;
       }
       case AVPlayerItemStatusFailed: {
         if (item.error.code == -11800) {
-          NSLog(
-              @"It looks like you are failing to load a remote asset. You probably requested a "
-              @"non-https url, and didn't specify arbitrary url loading in your app transport "
-              @"securty settings. Add an NSAppTransportSecurity entry to your Info.plist.");
+          NSLog(@"It looks like you are failing to load a remote asset. You probably requested a "
+                @"non-https url, and didn't specify arbitrary url loading in your app transport "
+                @"securty settings. Add an NSAppTransportSecurity entry to your Info.plist.");
         }
         _remoteLoadHandler(NO);
         break;

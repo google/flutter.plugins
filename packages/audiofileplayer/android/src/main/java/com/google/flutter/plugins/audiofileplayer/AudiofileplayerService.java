@@ -72,7 +72,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
             .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PLAY_PAUSE);
     mediaSession.setPlaybackState(stateBuilder.build());
 
-    mediaSessionCallback = new MediaSessionCallback(); //Do i need this as ivar?
+    mediaSessionCallback = new MediaSessionCallback(); // Do i need this as ivar?
     mediaSession.setCallback(mediaSessionCallback);
 
     setSessionToken(mediaSession.getSessionToken());
@@ -205,14 +205,17 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     String iconUri = "mipmap/ic_launcher";
 
     try {
-        ApplicationInfo ai = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
-        Bundle bundle = ai.metaData;
+      ApplicationInfo ai =
+          context
+              .getPackageManager()
+              .getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+      Bundle bundle = ai.metaData;
 
-        if (bundle != null) {
-          iconUri = bundle.getString("ic_audiofileplayer", iconUri);
-        }
+      if (bundle != null) {
+        iconUri = bundle.getString("ic_audiofileplayer", iconUri);
+      }
     } catch (Throwable t) {
-        Log.d(TAG, "Error reading meta-data tag 'ic_audiofileplayer'. Using the App Icon instead.");
+      Log.d(TAG, "Error reading meta-data tag 'ic_audiofileplayer'. Using the App Icon instead.");
     }
 
     smallIconId = context.getResources().getIdentifier(iconUri, null, context.getPackageName());
