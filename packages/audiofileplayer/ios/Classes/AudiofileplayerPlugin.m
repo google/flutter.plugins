@@ -66,7 +66,7 @@ static NSString *const kMediaSkipForward = @"skipForward";
 static NSString *const kMediaSkipBackward = @"skipBackward";
 static NSString *const kMediaSkipIntervalSeconds = @"skipIntervalSeconds";
 
-@interface AudiofileplayerPlugin () <FLTManagedPlayerDelegate>
+@interface AudiofileplayerPlugin ()<FLTManagedPlayerDelegate>
 @end
 
 @implementation AudiofileplayerPlugin {
@@ -79,8 +79,8 @@ static NSString *const kMediaSkipIntervalSeconds = @"skipIntervalSeconds";
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar> *)registrar {
   FlutterMethodChannel *channel =
       [FlutterMethodChannel methodChannelWithName:kChannel binaryMessenger:[registrar messenger]];
-  AudiofileplayerPlugin *instance = [[AudiofileplayerPlugin alloc] initWithRegistrar:registrar
-                                                                             channel:channel];
+  AudiofileplayerPlugin *instance =
+      [[AudiofileplayerPlugin alloc] initWithRegistrar:registrar channel:channel];
   [registrar addMethodCallDelegate:instance channel:channel];
   [registrar addApplicationDelegate:instance];
 }

@@ -6,5 +6,5 @@
  * Receives messages which create, trigger, and destroy instances of
  * FLTManagedPlayer.
  */
-@interface AudiofileplayerPlugin : NSObject <FlutterPlugin>
+@interface AudiofileplayerPlugin : NSObject<FlutterPlugin>
 @end
