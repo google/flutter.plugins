@@ -42,7 +42,6 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
   private MediaMetadataCompat metadata;
   private List<NotificationCompat.Action> notificationActions;
   private int[] compactNotificationActionIndices;
-  private int smallIconId;
 
   private long playbackStateActions = 0;
   private int playbackStateState = PlaybackStateCompat.STATE_NONE;
@@ -76,7 +75,6 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     mediaSession.setCallback(mediaSessionCallback);
 
     setSessionToken(mediaSession.getSessionToken());
-    setSmallIconId();
   }
 
   @Override
@@ -200,7 +198,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
 
   // private methods.
 
-  private void setSmallIconId() {
+  private int getSmallIconId() {
     Context context = getApplicationContext();
     String iconUri = "mipmap/ic_launcher";
 
@@ -211,14 +209,16 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
               .getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
       Bundle bundle = ai.metaData;
 
-      if (bundle != null) {
-        iconUri = bundle.getString("ic_audiofileplayer", iconUri);
+      if (bundle != null && bundle.containsKey("ic_audiofileplayer")) {
+        iconUri = bundle.getString("ic_audiofileplayer");
       }
     } catch (Throwable t) {
-      Log.d(TAG, "Error reading meta-data tag 'ic_audiofileplayer'. Using the App Icon instead.");
+      Log.d(
+          TAG,
+          "Something went wrong and/or there is no 'ic_audiofileplayer' in the metadata to load. Using the App Icon instead.");
     }
 
-    smallIconId = context.getResources().getIdentifier(iconUri, null, context.getPackageName());
+    return context.getResources().getIdentifier(iconUri, null, context.getPackageName());
   }
 
   private void updatePlaybackState() {
@@ -258,7 +258,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
         .setContentText(subtitle)
         .setSubText(description)
         .setLargeIcon(bitmap)
-        .setSmallIcon(smallIconId)
+        .setSmallIcon(getSmallIconId())
         // Enable launching the player by clicking the notification
         .setContentIntent(mediaSession.getController().getSessionActivity())
         // Stop the service when the notification is swiped away
