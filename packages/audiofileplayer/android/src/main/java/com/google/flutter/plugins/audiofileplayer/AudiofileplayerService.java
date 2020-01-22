@@ -215,7 +215,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     } catch (Throwable t) {
       Log.d(
           TAG,
-          "Something went wrong and/or there is no 'ic_audiofileplayer' in the metadata to load. Using the App Icon instead.");
+          "There is no 'ic_audiofileplayer' in the metadata to load. Using the App Icon instead.");
     }
 
     return context.getResources().getIdentifier(iconUri, null, context.getPackageName());
