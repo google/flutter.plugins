@@ -7,6 +7,8 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.os.Build;
@@ -69,7 +71,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
             .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PLAY_PAUSE);
     mediaSession.setPlaybackState(stateBuilder.build());
 
-    mediaSessionCallback = new MediaSessionCallback(); //Do i need this as ivar?
+    mediaSessionCallback = new MediaSessionCallback(); // Do i need this as ivar?
     mediaSession.setCallback(mediaSessionCallback);
 
     setSessionToken(mediaSession.getSessionToken());
@@ -196,6 +198,29 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
 
   // private methods.
 
+  private int getSmallIconId() {
+    Context context = getApplicationContext();
+    String iconUri = "mipmap/ic_launcher";
+
+    try {
+      ApplicationInfo ai =
+          context
+              .getPackageManager()
+              .getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+      Bundle bundle = ai.metaData;
+
+      if (bundle != null && bundle.containsKey("ic_audiofileplayer")) {
+        iconUri = bundle.getString("ic_audiofileplayer");
+      }
+    } catch (Throwable t) {
+      Log.d(
+          TAG,
+          "There is no 'ic_audiofileplayer' in the metadata to load. Using the App Icon instead.");
+    }
+
+    return context.getResources().getIdentifier(iconUri, null, context.getPackageName());
+  }
+
   private void updatePlaybackState() {
     PlaybackStateCompat.Builder stateBuilder =
         new PlaybackStateCompat.Builder()
@@ -225,10 +250,6 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
 
     Bitmap bitmap = (metadata != null) ? metadata.getDescription().getIconBitmap() : null;
 
-    int iconId =
-        getResources()
-            .getIdentifier("ic_launcher", "mipmap", getApplicationContext().getPackageName());
-
     NotificationCompat.Builder builder =
         new NotificationCompat.Builder(AudiofileplayerService.this, CHANNEL_ID);
     builder
@@ -237,7 +258,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
         .setContentText(subtitle)
         .setSubText(description)
         .setLargeIcon(bitmap)
-        .setSmallIcon(iconId)
+        .setSmallIcon(getSmallIconId())
         // Enable launching the player by clicking the notification
         .setContentIntent(mediaSession.getController().getSessionActivity())
         // Stop the service when the notification is swiped away
