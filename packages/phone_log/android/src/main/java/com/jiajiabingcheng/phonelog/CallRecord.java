@@ -30,7 +30,7 @@ class CallRecord {
     recordMap.put("dateMinute", dateMinute);
     recordMap.put("dateSecond", dateSecond);
     recordMap.put("duration", duration);
-    recordMap.put("dialledNumber", dialedNumber);
+    recordMap.put("dialedNumber", dialedNumber);
 
     return recordMap;
   }
