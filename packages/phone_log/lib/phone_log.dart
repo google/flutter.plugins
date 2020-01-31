@@ -69,6 +69,7 @@ class CallRecord {
     this.dateMinute,
     this.dateSecond,
     this.duration,
+    this.dialedNumber,
   });
 
   CallRecord.fromMap(Map<String, Object> m) {
@@ -82,6 +83,7 @@ class CallRecord {
     dateMinute = m['dateMinute'];
     dateSecond = m['dateSecond'];
     duration = m['duration'];
+    dialedNumber = m['dialedNumber'];
   }
 
   String formattedNumber, number, callType;
