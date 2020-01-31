@@ -9,7 +9,7 @@ class CallRecord {
   String formattedNumber;
   String number;
   String callType;
-  String dialledNumber;
+  String dialedNumber;
   int dateYear;
   int dateMonth;
   int dateDay;
@@ -30,7 +30,7 @@ class CallRecord {
     recordMap.put("dateMinute", dateMinute);
     recordMap.put("dateSecond", dateSecond);
     recordMap.put("duration", duration);
-    recordMap.put("dialledNumber", dialledNumber);
+    recordMap.put("dialledNumber", dialedNumber);
 
     return recordMap;
   }

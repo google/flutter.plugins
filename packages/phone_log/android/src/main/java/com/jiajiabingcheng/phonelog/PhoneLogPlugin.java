@@ -163,7 +163,7 @@ public class PhoneLogPlugin
     int typeIndex = cursor.getColumnIndex(CallLog.Calls.TYPE);
     int dateIndex = cursor.getColumnIndex(CallLog.Calls.DATE);
     int durationIndex = cursor.getColumnIndex(CallLog.Calls.DURATION);
-    int dialledNumberIndex = cursor.getColumnIndex(CallLog.Calls.NUMBER);
+    int dialedNumberIndex = cursor.getColumnIndex(CallLog.Calls.NUMBER);
 
     while (cursor != null && cursor.moveToNext()) {
       CallRecord record = new CallRecord();
@@ -172,7 +172,7 @@ public class PhoneLogPlugin
       record.formattedNumber = cursor.getString(formattedNumIndex);
       record.number = cursor.getString(cachedMatchedNumIndex);
       // This is the unformatted number when the call was made/received.
-      record.dialledNumber = cursor.getString(dialledNumberIndex);
+      record.dialedNumber = cursor.getString(dialedNumberIndex);
       record.callType = getCallType(cursor.getInt(typeIndex));
 
       Date date = new Date(cursor.getLong(dateIndex));
