@@ -171,7 +171,7 @@ public class PhoneLogPlugin
       // made/received.
       record.formattedNumber = cursor.getString(formattedNumIndex);
       record.number = cursor.getString(cachedMatchedNumIndex);
-      // This is the unformatted number when the call was made/received.
+      // This is the unformatted number with which the call was made/received.
       record.dialedNumber = cursor.getString(dialedNumberIndex);
       record.callType = getCallType(cursor.getInt(typeIndex));
 
