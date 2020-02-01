@@ -61,6 +61,7 @@ class CallRecord {
   CallRecord({
     this.formattedNumber,
     this.number,
+    this.dialedNumber,
     this.callType,
     this.dateYear,
     this.dateMonth,
@@ -86,6 +87,6 @@ class CallRecord {
     dialedNumber = m['dialedNumber'];
   }
 
-  String formattedNumber, number, callType;
+  String formattedNumber, number, dialedNumber, callType;
   int dateYear, dateMonth, dateDay, dateHour, dateMinute, dateSecond, duration;
 }
