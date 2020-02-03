@@ -1,6 +1,3 @@
-## 0.0.6
-Added a fallback value for 'number' field in case CACHED_MATCHED_NUMBER is empty.
-
 ## 0.0.5
 Update tests to use mock call handler.
 
