@@ -150,6 +150,10 @@ public class PhoneLogPlugin
     }
   }
 
+  private String getUnformattedNumber(String cachedMatchedNum, String dialedNum) {
+    return (cachedMatchedNum == null || cachedMatchedNum.isEmpty()) ? dialedNum : cachedMatchedNum;
+  }
+
   /**
    * Builds the list of call record maps from the cursor
    *
@@ -167,12 +171,14 @@ public class PhoneLogPlugin
 
     while (cursor != null && cursor.moveToNext()) {
       CallRecord record = new CallRecord();
-      // This number is formatted based on the country the user was in when the call was
-      // made/received.
+      // This field  holds the number formatted based on the country the user was in when the call
+      // was made/received.
       record.formattedNumber = cursor.getString(formattedNumIndex);
-      record.number = cursor.getString(cachedMatchedNumIndex);
-      // This is the unformatted number with which the call was made/received.
-      record.dialedNumber = cursor.getString(dialedNumberIndex);
+      // number holds the unformatted version of the actual number.
+      record.number = getUnformattedNumber(
+          cursor.getString(cachedMatchedNumIndex),
+          cursor.getString(dialedNumberIndex)
+      );
       record.callType = getCallType(cursor.getInt(typeIndex));
 
       Date date = new Date(cursor.getLong(dateIndex));
