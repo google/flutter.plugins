@@ -42,11 +42,12 @@ class PhoneLog {
     final String _startDate = startDate?.toString();
     final String _duration = duration?.toString();
 
-    final Iterable<Map<dynamic, dynamic>> records = (
-        await channel.invokeMethod<List<Map<String, dynamic>>>(
-            'getPhoneLogs',
-            <String, String>{"startDate": _startDate, "duration": _duration})
-    )
+    final Iterable<Map<dynamic, dynamic>> records = (await channel
+            .invokeMethod<List<Map<String, dynamic>>>(
+                'getPhoneLogs', <String, String>{
+      "startDate": _startDate,
+      "duration": _duration
+    }))
         ?.cast<Map<dynamic, dynamic>>();
     return records?.map((Map<dynamic, dynamic> m) =>
         new CallRecord.fromMap(m.cast<String, Object>()));
