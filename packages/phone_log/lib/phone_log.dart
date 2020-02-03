@@ -43,8 +43,7 @@ class PhoneLog {
     final String _duration = duration?.toString();
 
     final Iterable<Map<dynamic, dynamic>> records = (await channel
-            .invokeMethod<List<dynamic>>(
-                'getPhoneLogs', <String, String>{
+            .invokeMethod<List<dynamic>>('getPhoneLogs', <String, String>{
       "startDate": _startDate,
       "duration": _duration
     }))
