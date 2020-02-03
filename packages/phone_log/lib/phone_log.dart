@@ -21,14 +21,15 @@ class PhoneLog {
 
   /// Check a [permission] and return a [Future] of the [PermissionStatus].
   Future<PermissionStatus> checkPermission() async {
-    final String status = await channel.invokeMethod("checkPermission", null);
+    final String status =
+        await channel.invokeMethod<String>("checkPermission", null);
     return permissionMap[status];
   }
 
   /// Request a [permission] and return a [Future] of bool.
   Future<bool> requestPermission() async {
     final bool isGranted =
-        await channel.invokeMethod("requestPermission", null);
+        await channel.invokeMethod<bool>("requestPermission", null);
     return isGranted;
   }
 
@@ -41,9 +42,11 @@ class PhoneLog {
     final String _startDate = startDate?.toString();
     final String _duration = duration?.toString();
 
-    final Iterable<Map<dynamic, dynamic>> records = (await channel.invokeMethod(
+    final Iterable<Map<dynamic, dynamic>> records = (
+        await channel.invokeMethod<List<Map<String, dynamic>>>(
             'getPhoneLogs',
-            <String, String>{"startDate": _startDate, "duration": _duration}))
+            <String, String>{"startDate": _startDate, "duration": _duration})
+    )
         ?.cast<Map<dynamic, dynamic>>();
     return records?.map((Map<dynamic, dynamic> m) =>
         new CallRecord.fromMap(m.cast<String, Object>()));
