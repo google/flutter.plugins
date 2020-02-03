@@ -100,6 +100,7 @@ public class PhoneLogPlugin
     CallLog.Calls.TYPE,
     CallLog.Calls.DATE,
     CallLog.Calls.DURATION,
+    CallLog.Calls.NUMBER,
   };
 
   @TargetApi(Build.VERSION_CODES.M)
@@ -149,6 +150,10 @@ public class PhoneLogPlugin
     }
   }
 
+  private String getUnformattedNumber(String cachedMatchedNum, String dialedNum) {
+    return (cachedMatchedNum == null || cachedMatchedNum.isEmpty()) ? dialedNum : cachedMatchedNum;
+  }
+
   /**
    * Builds the list of call record maps from the cursor
    *
@@ -157,14 +162,25 @@ public class PhoneLogPlugin
    */
   private ArrayList<HashMap<String, Object>> getCallRecordMaps(Cursor cursor) {
     ArrayList<HashMap<String, Object>> records = new ArrayList<>();
+    int formattedNumIndex = cursor.getColumnIndex(CallLog.Calls.CACHED_FORMATTED_NUMBER);
+    int cachedMatchedNumIndex = cursor.getColumnIndex(CallLog.Calls.CACHED_MATCHED_NUMBER);
+    int typeIndex = cursor.getColumnIndex(CallLog.Calls.TYPE);
+    int dateIndex = cursor.getColumnIndex(CallLog.Calls.DATE);
+    int durationIndex = cursor.getColumnIndex(CallLog.Calls.DURATION);
+    int dialedNumberIndex = cursor.getColumnIndex(CallLog.Calls.NUMBER);
 
     while (cursor != null && cursor.moveToNext()) {
       CallRecord record = new CallRecord();
-      record.formattedNumber = cursor.getString(0);
-      record.number = cursor.getString(1);
-      record.callType = getCallType(cursor.getInt(2));
+      // This field  holds the number formatted based on the country the user was in when the call
+      // was made/received.
+      record.formattedNumber = cursor.getString(formattedNumIndex);
+      // number holds the unformatted version of the actual number.
+      record.number =
+          getUnformattedNumber(
+              cursor.getString(cachedMatchedNumIndex), cursor.getString(dialedNumberIndex));
+      record.callType = getCallType(cursor.getInt(typeIndex));
 
-      Date date = new Date(cursor.getLong(3));
+      Date date = new Date(cursor.getLong(dateIndex));
       Calendar cal = Calendar.getInstance();
       cal.setTime(date);
       record.dateYear = cal.get(Calendar.YEAR);
@@ -173,7 +189,7 @@ public class PhoneLogPlugin
       record.dateHour = cal.get(Calendar.HOUR_OF_DAY);
       record.dateMinute = cal.get(Calendar.MINUTE);
       record.dateSecond = cal.get(Calendar.SECOND);
-      record.duration = cursor.getLong(4);
+      record.duration = cursor.getLong(durationIndex);
 
       records.add(record.toMap());
     }

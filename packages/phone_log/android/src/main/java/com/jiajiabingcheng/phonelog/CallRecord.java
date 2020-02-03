@@ -6,6 +6,13 @@ class CallRecord {
 
   CallRecord() {}
 
+  // Note about the different number fields:
+  // Depending on how the number is dialed by the user
+  // i.e. manually entered through the device's dialpad,
+  // clicking on a contact or half-dialing the number
+  // and then clicking on the contact from the auto-
+  // complete suggestion, the number can be present in
+  // either the number or formattedNumber field.
   String formattedNumber;
   String number;
   String callType;

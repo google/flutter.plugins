@@ -41,7 +41,7 @@ void main() {
             'dateHour': 3,
             'dateMinute': 16,
             'dateSecond': 23,
-            'duration': 123
+            'duration': 123,
           }
         ];
       } else {
