@@ -175,10 +175,9 @@ public class PhoneLogPlugin
       // was made/received.
       record.formattedNumber = cursor.getString(formattedNumIndex);
       // number holds the unformatted version of the actual number.
-      record.number = getUnformattedNumber(
-          cursor.getString(cachedMatchedNumIndex),
-          cursor.getString(dialedNumberIndex)
-      );
+      record.number =
+          getUnformattedNumber(
+              cursor.getString(cachedMatchedNumIndex), cursor.getString(dialedNumberIndex));
       record.callType = getCallType(cursor.getInt(typeIndex));
 
       Date date = new Date(cursor.getLong(dateIndex));
