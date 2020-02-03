@@ -74,7 +74,6 @@ class CallRecord {
     this.dateMinute,
     this.dateSecond,
     this.duration,
-    this.dialedNumber,
   });
 
   CallRecord.fromMap(Map<String, Object> m) {
