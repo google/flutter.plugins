@@ -12,11 +12,9 @@ class CallRecord {
   // clicking on a contact or half-dialing the number
   // and then clicking on the contact from the auto-
   // complete suggestion, the number can be present in
-  // either the number, dialedNumber or formattedNumber
-  // field.
+  // either the number or formattedNumber field.
   String formattedNumber;
   String number;
-  String dialedNumber;
   String callType;
   int dateYear;
   int dateMonth;
@@ -38,7 +36,6 @@ class CallRecord {
     recordMap.put("dateMinute", dateMinute);
     recordMap.put("dateSecond", dateSecond);
     recordMap.put("duration", duration);
-    recordMap.put("dialedNumber", dialedNumber);
 
     return recordMap;
   }
