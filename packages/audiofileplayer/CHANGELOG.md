@@ -1,3 +1,6 @@
+## 1.2.0 - 28 Dec 2019
+  * Add loading audio from local files, via Audio.loadFromAbsolutePath().
+
 ## 1.1.1 - 28 Dec 2019
   * README tweaks.
 

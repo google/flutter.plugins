@@ -49,6 +49,7 @@ public class AudiofileplayerPlugin
   private static final String CHANNEL = "audiofileplayer";
   private static final String LOAD_METHOD = "load";
   private static final String FLUTTER_PATH = "flutterPath";
+  private static final String ABSOLUTE_PATH = "absolutePath";
   private static final String AUDIO_BYTES = "audioBytes";
   private static final String REMOTE_URL = "remoteUrl";
   private static final String AUDIO_ID = "audioId";
@@ -272,6 +273,13 @@ public class AudiofileplayerPlugin
         ManagedMediaPlayer newPlayer =
             new LocalManagedMediaPlayer(audioId, fd, this, looping, playInBackground);
         fd.close();
+        mediaPlayers.put(audioId, newPlayer);
+        handleDurationForPlayer(newPlayer, audioId);
+        result.success(null);
+      } else if (call.argument(ABSOLUTE_PATH) != null) {
+        String absolutePath = call.argument(ABSOLUTE_PATH);
+        ManagedMediaPlayer newPlayer =
+            new LocalManagedMediaPlayer(audioId, absolutePath, this, looping, playInBackground);
         mediaPlayers.put(audioId, newPlayer);
         handleDurationForPlayer(newPlayer, audioId);
         result.success(null);

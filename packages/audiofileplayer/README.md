@@ -2,7 +2,7 @@
 
 A Flutter plugin for audio playback.
 Supports
-  * Reading audio data from Flutter project assets, byte arrays, and remote URLs.
+  * Reading audio data from Flutter project assets, locale files, byte arrays, and remote URLs.
   * Seek to position.
   * Callbacks for loaded audio duration, current position, and playback completion.
   * Looping.
