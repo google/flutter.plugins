@@ -53,6 +53,23 @@ class LocalManagedMediaPlayer extends ManagedMediaPlayer {
   }
 
   /**
+   * Create a LocalManagedMediaPlayer from a path string.
+   *
+   * @throws IOException if underlying MediaPlayer cannot load the path.
+   */
+  public LocalManagedMediaPlayer(
+      String audioId,
+      String path,
+      AudiofileplayerPlugin parentAudioPlugin,
+      boolean looping,
+      boolean playInBackground)
+      throws IOException {
+    this(audioId, parentAudioPlugin, looping, playInBackground);
+    player.setDataSource(path);
+    player.prepare();
+  }
+
+  /**
    * Create a ManagedMediaPlayer from a byte array.
    *
    * <p>Uses {@link android.media.MediaPlayer#setDataSource(android.media.MediaDataSource)} if

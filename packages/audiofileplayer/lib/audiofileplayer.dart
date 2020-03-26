@@ -15,6 +15,7 @@ final Logger _logger = Logger('audiofileplayer');
 const String channelName = 'audiofileplayer';
 const String loadMethod = 'load';
 const String flutterPathKey = 'flutterPath';
+const String absolutePathKey = 'absolutePath';
 const String audioBytesKey = 'audioBytes';
 const String remoteUrlKey = 'remoteUrl';
 const String audioIdKey = 'audioId';
@@ -241,6 +242,16 @@ class Audio with WidgetsBindingObserver {
   Audio._path(this._path, this._onComplete, this._onDuration, this._onPosition,
       this._onError, this._looping, this._playInBackground)
       : _audioId = _uuid.v4(),
+        _absolutePath = null,
+        _audioBytes = null,
+        _remoteUrl = null {
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  Audio._absolutePath(this._absolutePath, this._onComplete, this._onDuration,
+      this._onPosition, this._onError, this._looping, this._playInBackground)
+      : _audioId = _uuid.v4(),
+        _path = null,
         _audioBytes = null,
         _remoteUrl = null {
     WidgetsBinding.instance.addObserver(this);
@@ -251,6 +262,7 @@ class Audio with WidgetsBindingObserver {
       : _audioId = _uuid.v4(),
         _audioBytes = Uint8List.view(byteData.buffer),
         _path = null,
+        _absolutePath = null,
         _remoteUrl = null {
     WidgetsBinding.instance.addObserver(this);
   }
@@ -259,7 +271,8 @@ class Audio with WidgetsBindingObserver {
       this._onPosition, this._onError, this._looping, this._playInBackground)
       : _audioId = _uuid.v4(),
         _audioBytes = null,
-        _path = null {
+        _path = null,
+        _absolutePath = null {
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -301,6 +314,7 @@ class Audio with WidgetsBindingObserver {
   static final Map<String, Audio> _usingOnErrorAudios = <String, Audio>{};
 
   final String _path;
+  final String _absolutePath;
   final Uint8List _audioBytes;
   final String _remoteUrl;
   final String _audioId;
@@ -324,6 +338,9 @@ class Audio with WidgetsBindingObserver {
 
   /// Creates an Audio from an asset.
   ///
+  /// [path] should be a relative path to Flutter assets, e.g.
+  /// `final audio = Audio.load('assets/foo.wav');`
+  ///
   /// Returns null if asset cannot be loaded.
   /// Note that it returns an Audio sync'ly, though loading occurs async'ly.
   static Audio load(String path,
@@ -335,6 +352,23 @@ class Audio with WidgetsBindingObserver {
       bool playInBackground = false}) {
     final Audio audio = Audio._path(path, onComplete, onDuration, onPosition,
         onError, looping, playInBackground)
+      .._load();
+    return audio;
+  }
+
+  /// Creates an Audio from an absolute path to a file.
+  ///
+  /// Returns null if asset cannot be loaded.
+  /// Note that it returns an Audio sync'ly, though loading occurs async'ly.
+  static Audio loadFromAbsolutePath(String path,
+      {void onComplete(),
+      void onDuration(double duration),
+      void onPosition(double position),
+      void onError(String message),
+      bool looping = false,
+      bool playInBackground = false}) {
+    final Audio audio = Audio._absolutePath(path, onComplete, onDuration,
+        onPosition, onError, looping, playInBackground)
       .._load();
     return audio;
   }
@@ -382,7 +416,10 @@ class Audio with WidgetsBindingObserver {
   /// Keeps strong reference to this Audio (for channel callback routing)
   /// and requests underlying resource loading.
   Future<void> _load() async {
-    assert(_path != null || _audioBytes != null || _remoteUrl != null);
+    assert(_path != null ||
+        _absolutePath != null ||
+        _audioBytes != null ||
+        _remoteUrl != null);
     assert(!_undisposedAudios.containsKey(_audioId));
     _logger.info('Loading audio $_audioId');
     // Note that we add the _audioId to _undisposedAudios before invoking a
@@ -395,6 +432,7 @@ class Audio with WidgetsBindingObserver {
     try {
       await _sendMethodCall(_audioId, loadMethod, <String, dynamic>{
         flutterPathKey: _path,
+        absolutePathKey: _absolutePath,
         audioBytesKey: _audioBytes,
         remoteUrlKey: _remoteUrl,
         audioIdKey: _audioId,
