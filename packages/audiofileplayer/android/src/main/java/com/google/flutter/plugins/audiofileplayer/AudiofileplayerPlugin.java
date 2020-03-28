@@ -20,8 +20,14 @@ import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.KeyEvent;
+import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.media.session.MediaButtonReceiver;
+import io.flutter.embedding.engine.loader.FlutterLoader;
+import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
+import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
@@ -42,7 +48,7 @@ import java.util.Map;
  * interaction.
  */
 public class AudiofileplayerPlugin
-    implements MethodCallHandler, AudiofileplayerService.ServiceListener {
+    implements MethodCallHandler, AudiofileplayerService.ServiceListener, FlutterPlugin, ActivityAware {
   private static final String TAG = AudiofileplayerPlugin.class.getSimpleName();
 
   // Method channel constants, matching those in the Dart and iOS plugin code.
@@ -112,35 +118,102 @@ public class AudiofileplayerPlugin
   // Used when defining an Intent from a custom media button.
   public static final String CUSTOM_MEDIA_BUTTON_EXTRA_KEY = "customMediaButton";
 
-  private final Registrar registrar;
-  private final Map<String, ManagedMediaPlayer> mediaPlayers;
-  private final MethodChannel methodChannel;
+  private Registrar registrar;
+  private Activity activity;
+  private Map<String, ManagedMediaPlayer> mediaPlayers;
+  private MethodChannel methodChannel;
+  private Context context;
+  private ActivityPluginBinding activityPluginBinding;
 
   private MediaBrowserCompat mediaBrowser;
   private MediaControllerCompat mediaController;
 
   public static void registerWith(Registrar registrar) {
-    final MethodChannel methodChannel = new MethodChannel(registrar.messenger(), CHANNEL);
-    final AudiofileplayerPlugin instance = new AudiofileplayerPlugin(registrar, methodChannel);
-    methodChannel.setMethodCallHandler(instance);
+    AudiofileplayerPlugin instance = new AudiofileplayerPlugin();
+    instance.registrar = registrar;
+    instance.activity = registrar.activity();
+    instance.initInstance(registrar.messenger(), registrar.context());
+    instance.registerLifecycleCallbacks(instance.activity);
   }
 
-  private AudiofileplayerPlugin(Registrar registrar, MethodChannel methodChannel) {
-    this.registrar = registrar;
-    this.methodChannel = methodChannel;
-    this.mediaPlayers = new HashMap<>();
-    LifecycleCallbacks callbacks = new LifecycleCallbacks(this, registrar.activity().hashCode());
-    registrar.activity().getApplication().registerActivityLifecycleCallbacks(callbacks);
+  private void registerLifecycleCallbacks(Activity activity) {
+    LifecycleCallbacks callbacks = new LifecycleCallbacks(this, activity.hashCode());
+    activity.getApplication().registerActivityLifecycleCallbacks(callbacks);
+  }
 
-    // Set up MediaBrowser to connect to AudiofileplayerService. Service will be started on first
-    // playback of a background asset.
-    Context context = registrar.activeContext();
+  private void initInstance(BinaryMessenger messenger, Context context) {
+    this.context = context;
+    methodChannel = new MethodChannel(messenger, CHANNEL);
+    methodChannel.setMethodCallHandler(this);
+    mediaPlayers = new HashMap<>();
+    Context activeContext = activeContext();
     mediaBrowser =
         new MediaBrowserCompat(
-            context,
-            new ComponentName(context, AudiofileplayerService.class),
+            activeContext,
+            new ComponentName(activeContext, AudiofileplayerService.class),
             connectionCallback,
             null);
+  }
+
+  private Activity activity() {
+    return activityPluginBinding != null ? activityPluginBinding.getActivity() : activity;
+  }
+
+  private Context activeContext() {
+    return activityPluginBinding != null ? activity() : context;
+  }
+
+  @Override
+  public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
+    initInstance(binding.getBinaryMessenger(), binding.getApplicationContext());
+  }
+
+  @Override
+  public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
+    methodChannel.setMethodCallHandler(null);
+    methodChannel = null;
+    mediaBrowser = null;
+    for (ManagedMediaPlayer player : mediaPlayers.values()) {
+      player.release();
+    }
+    mediaPlayers.clear();
+    mediaPlayers = null;
+    context = null;
+  }
+
+  private void attachToActivity(ActivityPluginBinding activityPluginBinding) {
+    this.activityPluginBinding = activityPluginBinding;
+    mediaBrowser.connect();
+  }
+
+  private void detachToActivity() {
+    if (MediaControllerCompat.getMediaController(activity()) != null) {
+      MediaControllerCompat.getMediaController(activity())
+          .unregisterCallback(controllerCallback);
+    }
+    mediaBrowser.disconnect();
+    this.activityPluginBinding = null;
+  }
+
+  @Override
+  public void onAttachedToActivity(ActivityPluginBinding activityPluginBinding) {
+    attachToActivity(activityPluginBinding);
+  }
+
+  @Override
+  public void onDetachedFromActivityForConfigChanges() {
+    detachToActivity();
+  }
+
+  @Override
+  public void onReattachedToActivityForConfigChanges(ActivityPluginBinding activityPluginBinding) {
+    attachToActivity(activityPluginBinding);
+    activity().setVolumeControlStream(AudioManager.STREAM_MUSIC);
+  }
+
+  @Override
+  public void onDetachedFromActivity() {
+    detachToActivity();
   }
 
   @Override
@@ -267,8 +340,8 @@ public class AudiofileplayerPlugin
     try {
       if (call.argument(FLUTTER_PATH) != null) {
         String flutterPath = call.argument(FLUTTER_PATH).toString();
-        AssetManager assetManager = registrar.context().getAssets();
-        String key = registrar.lookupKeyForAsset(flutterPath);
+        AssetManager assetManager = context.getAssets();
+        String key = FlutterLoader.getInstance().getLookupKeyForAsset(flutterPath);
         AssetFileDescriptor fd = assetManager.openFd(key);
         ManagedMediaPlayer newPlayer =
             new LocalManagedMediaPlayer(audioId, fd, this, looping, playInBackground);
@@ -287,7 +360,7 @@ public class AudiofileplayerPlugin
         byte[] audioBytes = call.argument(AUDIO_BYTES);
         ManagedMediaPlayer newPlayer =
             new LocalManagedMediaPlayer(
-                audioId, audioBytes, this, looping, playInBackground, registrar.context());
+                audioId, audioBytes, this, looping, playInBackground, context);
         mediaPlayers.put(audioId, newPlayer);
         handleDurationForPlayer(newPlayer, audioId);
         result.success(null);
@@ -412,7 +485,7 @@ public class AudiofileplayerPlugin
       // https://developer.android.com/guide/topics/media-apps/audio-app/building-a-mediabrowser-client
       AudiofileplayerPlugin audioPlugin = audioPluginRef.get();
       if (audioPlugin != null) {
-        audioPlugin.registrar.activity().setVolumeControlStream(AudioManager.STREAM_MUSIC);
+        activity.setVolumeControlStream(AudioManager.STREAM_MUSIC);
       }
     }
 
@@ -428,8 +501,8 @@ public class AudiofileplayerPlugin
       // https://developer.android.com/guide/topics/media-apps/audio-app/building-a-mediabrowser-client
       AudiofileplayerPlugin audioPlugin = audioPluginRef.get();
       if (audioPlugin != null) {
-        if (MediaControllerCompat.getMediaController(audioPlugin.registrar.activity()) != null) {
-          MediaControllerCompat.getMediaController(audioPlugin.registrar.activity())
+        if (MediaControllerCompat.getMediaController(activity) != null) {
+          MediaControllerCompat.getMediaController(activity)
               .unregisterCallback(audioPlugin.controllerCallback);
         }
         audioPlugin.mediaBrowser.disconnect();
@@ -459,7 +532,7 @@ public class AudiofileplayerPlugin
         public void onConnected() {
           Log.i(TAG, "ConnectionCallback.onConnected");
           try {
-            Activity activity = registrar.activity();
+            Activity activity = activity();
             MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
             mediaController = new MediaControllerCompat(activity, token);
             MediaControllerCompat.setMediaController(activity, mediaController);
@@ -569,45 +642,45 @@ public class AudiofileplayerPlugin
       case MEDIA_PAUSE:
         return new NotificationCompat.Action(
             R.drawable.ic_pause_black_36dp,
-            registrar.context().getString(R.string.pause),
+            context.getString(R.string.pause),
             MediaButtonReceiver.buildMediaButtonPendingIntent(
-                registrar.context(), PlaybackStateCompat.ACTION_PAUSE));
+                context, PlaybackStateCompat.ACTION_PAUSE));
       case MEDIA_PLAY:
         return new NotificationCompat.Action(
             R.drawable.ic_play_arrow_black_36dp,
-            registrar.context().getString(R.string.play),
+            context.getString(R.string.play),
             MediaButtonReceiver.buildMediaButtonPendingIntent(
-                registrar.context(), PlaybackStateCompat.ACTION_PLAY));
+                context, PlaybackStateCompat.ACTION_PLAY));
       case MEDIA_STOP:
         return new NotificationCompat.Action(
             R.drawable.ic_stop_black_36dp,
-            registrar.context().getString(R.string.stop),
+            context.getString(R.string.stop),
             MediaButtonReceiver.buildMediaButtonPendingIntent(
-                registrar.context(), PlaybackStateCompat.ACTION_STOP));
+                context, PlaybackStateCompat.ACTION_STOP));
       case MEDIA_NEXT:
         return new NotificationCompat.Action(
             R.drawable.ic_skip_next_black_36dp,
-            registrar.context().getString(R.string.skipForward),
+            context.getString(R.string.skipForward),
             MediaButtonReceiver.buildMediaButtonPendingIntent(
-                registrar.context(), PlaybackStateCompat.ACTION_SKIP_TO_NEXT));
+                context, PlaybackStateCompat.ACTION_SKIP_TO_NEXT));
       case MEDIA_PREVIOUS:
         return new NotificationCompat.Action(
             R.drawable.ic_skip_previous_black_36dp,
-            registrar.context().getString(R.string.skipBackward),
+            context.getString(R.string.skipBackward),
             MediaButtonReceiver.buildMediaButtonPendingIntent(
-                registrar.context(), PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS));
+                context, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS));
       case MEDIA_SEEK_FORWARD:
         return new NotificationCompat.Action(
             R.drawable.ic_fast_forward_black_36dp,
-            registrar.context().getString(R.string.seekForward),
+            context.getString(R.string.seekForward),
             MediaButtonReceiver.buildMediaButtonPendingIntent(
-                registrar.context(), PlaybackStateCompat.ACTION_FAST_FORWARD));
+                context, PlaybackStateCompat.ACTION_FAST_FORWARD));
       case MEDIA_SEEK_BACKWARD:
         return new NotificationCompat.Action(
             R.drawable.ic_fast_rewind_black_36dp,
-            registrar.context().getString(R.string.seekBackward),
+            context.getString(R.string.seekBackward),
             MediaButtonReceiver.buildMediaButtonPendingIntent(
-                registrar.context(), PlaybackStateCompat.ACTION_REWIND));
+                context, PlaybackStateCompat.ACTION_REWIND));
       default:
         Log.e(TAG, "unsupported mediaButtonType:" + mediaButtonType);
         return null; //ERROR
@@ -616,7 +689,7 @@ public class AudiofileplayerPlugin
 
   /** Converts a custom media button map (from Dart) into a {@link NotificationCompat.Action}. */
   private NotificationCompat.Action customMediaButtonMapToAction(Map customMediaButton) {
-    Context context = registrar.context();
+    Context context = this.context;
     String resourceName = (String) customMediaButton.get(MEDIA_CUSTOM_DRAWABLE_RESOURCE);
     String title = (String) customMediaButton.get(MEDIA_CUSTOM_TITLE);
     String eventId = (String) customMediaButton.get(MEDIA_CUSTOM_EVENT_ID);
@@ -624,12 +697,12 @@ public class AudiofileplayerPlugin
         context.getResources().getIdentifier(resourceName, "drawable", context.getPackageName());
     ComponentName component =
         new ComponentName(
-            registrar.context().getPackageName(), AudiofileplayerService.class.getName());
+            context.getPackageName(), AudiofileplayerService.class.getName());
     Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
     intent.setComponent(component);
     intent.putExtra(CUSTOM_MEDIA_BUTTON_EXTRA_KEY, eventId);
     PendingIntent pendingIntent =
-        PendingIntent.getService(registrar.context(), 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
     return new NotificationCompat.Action(resourceId, title, pendingIntent);
   }
