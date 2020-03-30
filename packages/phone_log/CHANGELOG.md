@@ -1,3 +1,6 @@
+## 0.0.7
+Migrate to Android v2 embedding.
+
 ## 0.0.6
 Added a fallback value for 'number' field in case CACHED_MATCHED_NUMBER is empty.
 
