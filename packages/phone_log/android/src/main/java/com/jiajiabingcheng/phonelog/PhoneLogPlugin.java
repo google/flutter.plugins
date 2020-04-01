@@ -55,7 +55,11 @@ public class PhoneLogPlugin
       case "getPhoneLogs":
         String startDate = call.argument("startDate");
         String duration = call.argument("duration");
-        fetchCallRecords(startDate, duration);
+        if(android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M) {
+            noAuthFetchCallRecords(startDate, duration);
+        } else {
+            fetchCallRecords(startDate, duration);
+        }
         break;
       default:
         result.notImplemented();
@@ -103,10 +107,7 @@ public class PhoneLogPlugin
     CallLog.Calls.NUMBER,
   };
 
-  @TargetApi(Build.VERSION_CODES.M)
-  private void fetchCallRecords(String startDate, String duration) {
-    if (registrar.activity().checkSelfPermission(Manifest.permission.READ_CALL_LOG)
-        == PackageManager.PERMISSION_GRANTED) {
+  private void noAuthFetchCallRecords(String startDate, String duration) {
       String selectionCondition = null;
       if (startDate != null) {
         selectionCondition = CallLog.Calls.DATE + "> " + startDate;
@@ -143,7 +144,13 @@ public class PhoneLogPlugin
           cursor.close();
         }
       }
+  }
 
+  @TargetApi(Build.VERSION_CODES.M)
+  private void fetchCallRecords(String startDate, String duration) {
+    if (registrar.activity().checkSelfPermission(Manifest.permission.READ_CALL_LOG)
+        == PackageManager.PERMISSION_GRANTED) {
+        noAuthFetchCallRecords(startDate, duration);
     } else {
       pendingResult.error("PhoneLog", "Permission is not granted", null);
       pendingResult = null;
