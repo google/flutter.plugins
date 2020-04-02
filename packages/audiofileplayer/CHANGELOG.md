@@ -1,3 +1,6 @@
+## 1.3.0 - 27 Mar 2020
+  * Migrate to Android v2 embedding.
+
 ## 1.2.0 - 28 Dec 2019
   * Add loading audio from local files, via Audio.loadFromAbsolutePath().
 
