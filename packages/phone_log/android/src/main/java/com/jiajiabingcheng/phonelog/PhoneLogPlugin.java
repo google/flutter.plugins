@@ -2,11 +2,18 @@ package com.jiajiabingcheng.phonelog;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.app.Activity;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Build;
 import android.provider.CallLog;
 import android.util.Log;
+import androidx.annotation.NonNull;
+import io.flutter.embedding.engine.plugins.FlutterPlugin;
+import io.flutter.embedding.engine.plugins.activity.ActivityAware;
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
+import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
@@ -21,20 +28,75 @@ import java.util.HashMap;
 /** PhoneLogPlugin */
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class PhoneLogPlugin
-    implements MethodCallHandler, PluginRegistry.RequestPermissionsResultListener {
-  private final Registrar registrar;
+    implements MethodCallHandler, PluginRegistry.RequestPermissionsResultListener, FlutterPlugin, ActivityAware {
   private Result pendingResult;
-
-  private PhoneLogPlugin(Registrar registrar) {
-    this.registrar = registrar;
-  }
+  private Registrar registrar;
+  // Activity for v2 embedding.
+  private Activity activity;
+  private ActivityPluginBinding activityPluginBinding;
+  private MethodChannel methodChannel;
+  private Context context;
 
   public static void registerWith(Registrar registrar) {
-    final MethodChannel channel =
-        new MethodChannel(registrar.messenger(), "github.com/jiajiabingcheng/phone_log");
-    PhoneLogPlugin phoneLogPlugin = new PhoneLogPlugin(registrar);
-    channel.setMethodCallHandler(phoneLogPlugin);
-    registrar.addRequestPermissionsResultListener(phoneLogPlugin);
+    PhoneLogPlugin instance = new PhoneLogPlugin();
+    instance.registrar = registrar;
+    instance.initInstance(registrar.messenger(), registrar.context());
+    registrar.addRequestPermissionsResultListener(instance);
+  }
+
+  private void initInstance(BinaryMessenger messenger, Context context) {
+    methodChannel =
+      new MethodChannel(messenger, "github.com/jiajiabingcheng/phone_log");
+    methodChannel.setMethodCallHandler(this);
+    this.context = context;
+  }
+
+  private Activity activity() {
+    return activity != null ? activity : registrar.activity();
+  }
+
+  @Override
+  public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
+    initInstance(binding.getBinaryMessenger(), binding.getApplicationContext());
+  }
+
+  @Override
+  public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
+    methodChannel.setMethodCallHandler(null);
+    methodChannel = null;
+    context = null;
+  }
+
+  private void attachToActivity(ActivityPluginBinding activityPluginBinding) {
+    this.activity = activityPluginBinding.getActivity();
+    this.activityPluginBinding = activityPluginBinding;
+    activityPluginBinding.addRequestPermissionsResultListener(this);
+  }
+
+  private void detachToActivity() {
+    this.activity = null;
+    activityPluginBinding.removeRequestPermissionsResultListener(this);
+    this.activityPluginBinding = null;
+  }
+
+  @Override
+  public void onAttachedToActivity(ActivityPluginBinding activityPluginBinding) {
+    attachToActivity(activityPluginBinding);
+  }
+
+  @Override
+  public void onDetachedFromActivityForConfigChanges() {
+    detachToActivity();
+  }
+
+  @Override
+  public void onReattachedToActivityForConfigChanges(ActivityPluginBinding activityPluginBinding) {
+    attachToActivity(activityPluginBinding);
+  }
+
+  @Override
+  public void onDetachedFromActivity() {
+    detachToActivity();
   }
 
   @Override
@@ -65,18 +127,17 @@ public class PhoneLogPlugin
   private void requestPermission() {
     Log.i("PhoneLogPlugin", "Requesting permission : " + Manifest.permission.READ_CALL_LOG);
     String[] perm = {Manifest.permission.READ_CALL_LOG};
-    registrar.activity().requestPermissions(perm, 0);
+    activity().requestPermissions(perm, 0);
   }
 
   private String checkPermission() {
     Log.i("PhoneLogPlugin", "Checking permission : " + Manifest.permission.READ_CALL_LOG);
     boolean isGranted =
         PackageManager.PERMISSION_GRANTED
-            == registrar.activity().checkSelfPermission(Manifest.permission.READ_CALL_LOG);
+            == activity().checkSelfPermission(Manifest.permission.READ_CALL_LOG);
     if (isGranted) {
       return "granted";
-    } else if (registrar
-        .activity()
+    } else if (activity()
         .shouldShowRequestPermissionRationale(Manifest.permission.READ_CALL_LOG)) {
       return "denied";
     }
@@ -105,7 +166,7 @@ public class PhoneLogPlugin
 
   @TargetApi(Build.VERSION_CODES.M)
   private void fetchCallRecords(String startDate, String duration) {
-    if (registrar.activity().checkSelfPermission(Manifest.permission.READ_CALL_LOG)
+    if (activity().checkSelfPermission(Manifest.permission.READ_CALL_LOG)
         == PackageManager.PERMISSION_GRANTED) {
       String selectionCondition = null;
       if (startDate != null) {
@@ -120,8 +181,7 @@ public class PhoneLogPlugin
         }
       }
       Cursor cursor =
-          registrar
-              .context()
+          context
               .getContentResolver()
               .query(
                   CallLog.Calls.CONTENT_URI,
