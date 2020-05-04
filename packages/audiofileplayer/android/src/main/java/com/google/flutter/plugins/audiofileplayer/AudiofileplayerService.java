@@ -144,7 +144,9 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     String eventId =
         (String) intent.getExtras().get(AudiofileplayerPlugin.CUSTOM_MEDIA_BUTTON_EXTRA_KEY);
     Log.d(TAG, "Got custom button intent with eventId:" + eventId);
-    listener.onCustomMediaButtonClick(eventId);
+    if (listener != null){
+      listener.onCustomMediaButtonClick(eventId);
+    }
   }
 
   public void stop() {
@@ -337,7 +339,9 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
       final KeyEvent event = (KeyEvent) mediaButtonEvent.getExtras().get(Intent.EXTRA_KEY_EVENT);
       if (event.getAction() == KeyEvent.ACTION_DOWN) {
         Log.i(TAG, "event key code:" + event.getKeyCode());
-        listener.onMediaButtonClick(event.getKeyCode());
+        if (listener != null) {
+          listener.onMediaButtonClick(event.getKeyCode());
+        }
       }
 
       return true;
@@ -346,7 +350,9 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     @Override
     public void onSeekTo(long positionMs) {
       Log.i(TAG, "MediaSessionCallback.onSeekTo:" + positionMs);
-      listener.onSeekTo(positionMs);
+      if (listener != null) {
+        listener.onSeekTo(positionMs);
+      }
     }
   }
 
