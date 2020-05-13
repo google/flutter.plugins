@@ -80,23 +80,20 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
               .build();
       am.requestAudioFocus(mFocusRequest);
     } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.FROYO) {
-      AudioManager.OnAudioFocusChangeListener onAudioFocusChangeListener = new AudioManager.OnAudioFocusChangeListener() {
-        @Override
-        public void onAudioFocusChange(int focusChange) {
-          switch (focusChange) {
-            case AUDIOFOCUS_GAIN:
-              break;
-            case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
-              break;
-            case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
-              break;
-            case AudioManager.AUDIOFOCUS_LOSS:
-              break;
-            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-              break;
-            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-              break;
-          }
+      AudioManager.OnAudioFocusChangeListener onAudioFocusChangeListener = focusChange -> {
+        switch (focusChange) {
+          case AUDIOFOCUS_GAIN:
+            break;
+          case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
+            break;
+          case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
+            break;
+          case AudioManager.AUDIOFOCUS_LOSS:
+            break;
+          case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+            break;
+          case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+            break;
         }
       };
       am.requestAudioFocus(onAudioFocusChangeListener, AudioManager.STREAM_MUSIC, AUDIOFOCUS_GAIN);
@@ -338,6 +335,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     public void onPlay() {
       Log.i(TAG, "MediaSessionCallback.onPlay");
       startService(new Intent(AudiofileplayerService.this, AudiofileplayerService.class));
+      if (!mediaSession.isActive()) mediaSession.setActive(true);
       Notification notif = buildNotification();
       // Display the notification and place the service in the foreground
       startForeground(NOTIFICATION_ID, notif);
