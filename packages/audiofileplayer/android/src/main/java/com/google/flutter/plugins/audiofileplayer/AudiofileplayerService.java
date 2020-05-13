@@ -1,30 +1,23 @@
 package com.google.flutter.plugins.audiofileplayer;
 
-import android.app.Activity;
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
+import android.app.*;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.media.MediaBrowserCompat;
-import android.support.v4.media.MediaMetadataCompat;
-import android.support.v4.media.session.MediaSessionCompat;
-import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.KeyEvent;
-import androidx.annotation.RequiresApi;
-import androidx.core.app.NotificationCompat;
-import androidx.media.MediaBrowserServiceCompat;
-import androidx.media.app.NotificationCompat.MediaStyle;
-import androidx.media.session.MediaButtonReceiver;
+
 import java.util.List;
+
+import static android.content.Context.AUDIO_SERVICE;
+import static android.media.AudioManager.AUDIOFOCUS_GAIN;
 
 public class AudiofileplayerService extends MediaBrowserServiceCompat
     implements AudioManager.OnAudioFocusChangeListener {
@@ -64,18 +57,52 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
 
     mediaSession = new MediaSessionCompat(this, TAG);
     mediaSession.setFlags(
-        MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
-            | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+            MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
+                    | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
     PlaybackStateCompat.Builder stateBuilder =
-        new PlaybackStateCompat.Builder()
-            .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PLAY_PAUSE);
+            new PlaybackStateCompat.Builder()
+                    .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PLAY_PAUSE);
     mediaSession.setPlaybackState(stateBuilder.build());
 
     mediaSessionCallback = new MediaSessionCallback(); // Do i need this as ivar?
     mediaSession.setCallback(mediaSessionCallback);
-
     setSessionToken(mediaSession.getSessionToken());
+    AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
+    mediaSession.setActive(true);
+    AudioFocusRequest mFocusRequest = null;
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+      AudioAttributes mPlaybackAttributes = new AudioAttributes.Builder()
+              .setUsage(AudioAttributes.USAGE_MEDIA)
+              .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+              .build();
+      mFocusRequest = new AudioFocusRequest.Builder(AUDIOFOCUS_GAIN)
+              .setAudioAttributes(mPlaybackAttributes)
+              .build();
+      am.requestAudioFocus(mFocusRequest);
+    } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.FROYO) {
+      AudioManager.OnAudioFocusChangeListener onAudioFocusChangeListener = new AudioManager.OnAudioFocusChangeListener() {
+        @Override
+        public void onAudioFocusChange(int focusChange) {
+          switch (focusChange) {
+            case AUDIOFOCUS_GAIN:
+              break;
+            case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT:
+              break;
+            case AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK:
+              break;
+            case AudioManager.AUDIOFOCUS_LOSS:
+              break;
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+              break;
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+              break;
+          }
+        }
+      };
+      am.requestAudioFocus(onAudioFocusChangeListener, AudioManager.STREAM_MUSIC, AUDIOFOCUS_GAIN);
+    }
   }
+
 
   @Override
   public BrowserRoot onGetRoot(String clientPackageName, int clientUid, Bundle rootHints) {
@@ -110,6 +137,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     Log.i(TAG, "onDestroy");
     instance = null;
     mediaSession.release();
+    clearNotification();
     super.onDestroy();
   }
 
@@ -158,6 +186,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
             .setState(PlaybackStateCompat.STATE_STOPPED, playbackStatePosition, 0.0f);
     mediaSession.setPlaybackState(builder.build());
     mediaSession.setActive(false);
+    clearNotification();
     stopForeground(true);
     stopSelf();
   }
@@ -309,7 +338,6 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     public void onPlay() {
       Log.i(TAG, "MediaSessionCallback.onPlay");
       startService(new Intent(AudiofileplayerService.this, AudiofileplayerService.class));
-      if (!mediaSession.isActive()) mediaSession.setActive(true);
       Notification notif = buildNotification();
       // Display the notification and place the service in the foreground
       startForeground(NOTIFICATION_ID, notif);
@@ -358,7 +386,13 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
 
   private void updateNotification() {
     NotificationManager notificationManager =
-        (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
     notificationManager.notify(NOTIFICATION_ID, buildNotification());
+  }
+
+  private void clearNotification() {
+    NotificationManager notificationManager =
+            (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+    notificationManager.cancel(NOTIFICATION_ID);
   }
 }
