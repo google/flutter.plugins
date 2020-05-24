@@ -1,3 +1,6 @@
+## 1.3.1 - 23 May 2020
+  * Fix null pointer issues on Android.
+
 ## 1.3.0 - 27 Mar 2020
   * Migrate to Android v2 embedding.
 
