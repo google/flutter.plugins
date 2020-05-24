@@ -28,7 +28,10 @@ import java.util.HashMap;
 /** PhoneLogPlugin */
 @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class PhoneLogPlugin
-    implements MethodCallHandler, PluginRegistry.RequestPermissionsResultListener, FlutterPlugin, ActivityAware {
+    implements MethodCallHandler,
+        PluginRegistry.RequestPermissionsResultListener,
+        FlutterPlugin,
+        ActivityAware {
   private Result pendingResult;
   private Registrar registrar;
   // Activity for v2 embedding.
@@ -45,8 +48,7 @@ public class PhoneLogPlugin
   }
 
   private void initInstance(BinaryMessenger messenger, Context context) {
-    methodChannel =
-      new MethodChannel(messenger, "github.com/jiajiabingcheng/phone_log");
+    methodChannel = new MethodChannel(messenger, "github.com/jiajiabingcheng/phone_log");
     methodChannel.setMethodCallHandler(this);
     this.context = context;
   }
@@ -137,8 +139,7 @@ public class PhoneLogPlugin
             == activity().checkSelfPermission(Manifest.permission.READ_CALL_LOG);
     if (isGranted) {
       return "granted";
-    } else if (activity()
-        .shouldShowRequestPermissionRationale(Manifest.permission.READ_CALL_LOG)) {
+    } else if (activity().shouldShowRequestPermissionRationale(Manifest.permission.READ_CALL_LOG)) {
       return "denied";
     }
     return "deniedAndCannotRequest";

@@ -93,15 +93,15 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
   @Override
   public int onStartCommand(final Intent intent, int flags, int startId) {
     Log.i(TAG, "onStartCommand");
-    if (intent != null){
+    if (intent != null) {
       if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())
-              && intent.hasExtra(AudiofileplayerPlugin.CUSTOM_MEDIA_BUTTON_EXTRA_KEY)) {
+          && intent.hasExtra(AudiofileplayerPlugin.CUSTOM_MEDIA_BUTTON_EXTRA_KEY)) {
         // Check for custom button intent.
         handleCustomButtonIntent(intent);
       } else {
         // If there is a KeyEvent in the intent, send it to the MediaButtonReceiver to pass to
         // its callbacks.
-        if (mediaSession != null){
+        if (mediaSession != null) {
           MediaButtonReceiver.handleIntent(mediaSession, intent);
         }
       }
@@ -148,7 +148,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     String eventId =
         (String) intent.getExtras().get(AudiofileplayerPlugin.CUSTOM_MEDIA_BUTTON_EXTRA_KEY);
     Log.d(TAG, "Got custom button intent with eventId:" + eventId);
-    if (listener != null){
+    if (listener != null) {
       listener.onCustomMediaButtonClick(eventId);
     }
   }
