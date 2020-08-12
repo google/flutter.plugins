@@ -1,3 +1,6 @@
+## 1.3.2 - 11 August 2020
+  * Fix notification stop/restart issue on Android.
+
 ## 1.3.1 - 23 May 2020
   * Fix null pointer issues on Android.
 
@@ -33,4 +36,3 @@
 ## 1.0.0 - 7 Nov 2019
 
   * Initial open source release
-

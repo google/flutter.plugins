@@ -156,6 +156,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
   public void stop() {
     metadata = null;
     if (notificationActions != null) notificationActions.clear();
+    this.compactNotificationActionIndices = new int[0];
     PlaybackStateCompat.Builder builder =
         new PlaybackStateCompat.Builder()
             .setActions(0)
