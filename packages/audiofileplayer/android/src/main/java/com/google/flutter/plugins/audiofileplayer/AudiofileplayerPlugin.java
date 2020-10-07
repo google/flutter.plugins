@@ -23,7 +23,6 @@ import android.view.KeyEvent;
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.media.session.MediaButtonReceiver;
-import io.flutter.embedding.engine.loader.FlutterLoader;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
@@ -127,6 +126,7 @@ public class AudiofileplayerPlugin
   private Map<String, ManagedMediaPlayer> mediaPlayers;
   private MethodChannel methodChannel;
   private Context context;
+  private FlutterAssets flutterAssets;
 
   private MediaBrowserCompat mediaBrowser;
   private MediaControllerCompat mediaController;
@@ -134,7 +134,27 @@ public class AudiofileplayerPlugin
   public static void registerWith(Registrar registrar) {
     AudiofileplayerPlugin instance = new AudiofileplayerPlugin();
     instance.registrar = registrar;
-    instance.initInstance(registrar.messenger(), registrar.context());
+    instance.initInstance(registrar.messenger(), new FlutterAssets() {
+      @Override
+      public String getAssetFilePathByName(@NonNull String assetFileName) {
+        return registrar.lookupKeyForAsset(assetFileName);
+      }
+
+      @Override
+      public String getAssetFilePathByName(@NonNull String assetFileName, @NonNull String packageName) {
+        return registrar.lookupKeyForAsset(assetFileName, packageName);
+      }
+
+      @Override
+      public String getAssetFilePathBySubpath(@NonNull String assetSubpath) {
+        return registrar.lookupKeyForAsset(assetSubpath);
+      }
+
+      @Override
+      public String getAssetFilePathBySubpath(@NonNull String assetSubpath, @NonNull String packageName) {
+        return registrar.lookupKeyForAsset(assetSubpath, packageName);
+      }
+    }, registrar.context());
     instance.registerLifecycleCallbacks(instance.activity());
   }
 
@@ -143,8 +163,9 @@ public class AudiofileplayerPlugin
     activity.getApplication().registerActivityLifecycleCallbacks(callbacks);
   }
 
-  private void initInstance(BinaryMessenger messenger, Context context) {
+  private void initInstance(BinaryMessenger messenger, FlutterPlugin.FlutterAssets flutterAssets, Context context) {
     this.context = context;
+    this.flutterAssets = flutterAssets;
     methodChannel = new MethodChannel(messenger, CHANNEL);
     methodChannel.setMethodCallHandler(this);
     mediaPlayers = new HashMap<>();
@@ -172,7 +193,7 @@ public class AudiofileplayerPlugin
 
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
-    initInstance(binding.getBinaryMessenger(), binding.getApplicationContext());
+    initInstance(binding.getBinaryMessenger(), binding.getFlutterAssets(), binding.getApplicationContext());
   }
 
   @Override
@@ -266,6 +287,7 @@ public class AudiofileplayerPlugin
 
     // All subsequent calls need a valid player.
     ManagedMediaPlayer player = getAndVerifyPlayer(call, result);
+    if (player == null) return;
 
     if (call.method.equals(PLAY_METHOD)) {
       Boolean playFromStartBoolean = call.argument(PLAY_FROM_START);
@@ -339,7 +361,7 @@ public class AudiofileplayerPlugin
       if (call.argument(FLUTTER_PATH) != null) {
         String flutterPath = call.argument(FLUTTER_PATH).toString();
         AssetManager assetManager = context.getAssets();
-        String key = FlutterLoader.getInstance().getLookupKeyForAsset(flutterPath);
+        String key = flutterAssets.getAssetFilePathByName(flutterPath);
         AssetFileDescriptor fd = assetManager.openFd(key);
         ManagedMediaPlayer newPlayer =
             new LocalManagedMediaPlayer(audioId, fd, this, looping, playInBackground);
@@ -387,7 +409,7 @@ public class AudiofileplayerPlugin
         return;
       }
     } catch (Exception e) {
-      result.error(ERROR_CODE, "Could not create ManagedMediaPlayer:" + e.getMessage(), null);
+      result.error(ERROR_CODE, "Could not create ManagedMediaPlayer: " + e.getMessage(), null);
     }
   }
 
@@ -508,7 +530,8 @@ public class AudiofileplayerPlugin
     }
 
     @Override
-    public void onActivitySaveInstanceState(Activity activity, Bundle outState) {}
+    public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+    }
 
     @Override
     public void onActivityDestroyed(Activity activity) {
