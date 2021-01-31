@@ -73,8 +73,27 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
 
     mediaSessionCallback = new MediaSessionCallback(); // Do i need this as ivar?
     mediaSession.setCallback(mediaSessionCallback);
-
     setSessionToken(mediaSession.getSessionToken());
+
+    Notification notif = buildNotification();
+
+
+    // TESTING IF THIS HELPS WITH THE CRASHES & ANRS
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      // Display the notification and place the service in the foreground
+      startForeground(NOTIFICATION_ID, notif);
+
+    }
+/*    if (Build.VERSION.SDK_INT >= 26) {
+      String CHANNEL_ID = "GentleBirth";
+      NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+              "GentleBirth", NotificationManager.IMPORTANCE_DEFAULT);
+      ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+      Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+              .setContentTitle("")
+              .setContentText("").build();
+      startForeground(1, notification);
+    }*/
   }
 
   @Override
@@ -82,6 +101,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     Log.i(TAG, "onGetRoot");
     return new BrowserRoot(MEDIA_ROOT_ID, null);
   }
+
 
   @Override
   public void onLoadChildren(
@@ -93,16 +113,21 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
   @Override
   public int onStartCommand(final Intent intent, int flags, int startId) {
     Log.i(TAG, "onStartCommand");
-    if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())
-        && intent.hasExtra(AudiofileplayerPlugin.CUSTOM_MEDIA_BUTTON_EXTRA_KEY)) {
-      // Check for custom button intent.
-      handleCustomButtonIntent(intent);
-    } else {
-      // If there is a KeyEvent in the intent, send it to the MediaButtonReceiver to pass to
-      // its callbacks.
-      MediaButtonReceiver.handleIntent(mediaSession, intent);
+
+    if (intent != null){
+      if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())
+              && intent.hasExtra(AudiofileplayerPlugin.CUSTOM_MEDIA_BUTTON_EXTRA_KEY)) {
+        // Check for custom button intent.
+        handleCustomButtonIntent(intent);
+      } else {
+        // If there is a KeyEvent in the intent, send it to the MediaButtonReceiver to pass to
+        // its callbacks.
+        if (mediaSession != null){
+          MediaButtonReceiver.handleIntent(mediaSession, intent);
+        }
+      }
     }
-    return super.onStartCommand(intent, flags, startId);
+    return START_NOT_STICKY;
   }
 
   @Override
@@ -116,8 +141,11 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
   @Override
   public void onTaskRemoved(Intent rootIntent) {
     Log.i(TAG, "onTaskRemoved");
-    stopForeground(true);
-    stopSelf();
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      stopForeground(true);
+    } else {
+      stopSelf();
+    }
     super.onTaskRemoved(rootIntent);
   }
 
@@ -144,7 +172,9 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     String eventId =
         (String) intent.getExtras().get(AudiofileplayerPlugin.CUSTOM_MEDIA_BUTTON_EXTRA_KEY);
     Log.d(TAG, "Got custom button intent with eventId:" + eventId);
-    listener.onCustomMediaButtonClick(eventId);
+    if (listener != null){
+      listener.onCustomMediaButtonClick(eventId);
+    }
   }
 
   public void stop() {
@@ -270,8 +300,9 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
         // Set the media style to show icons for the Actions.
         .setStyle(
             new MediaStyle()
-                .setMediaSession(mediaSession.getSessionToken())
-                .setShowActionsInCompactView(compactNotificationActionIndices)
+                .setMediaSession(mediaSession.getSessionToken()
+                        // Commenting this so that there is no action when COMPACT to avoid some crashes that were happening.
+               // .setShowActionsInCompactView(compactNotificationActionIndices)
                 .setShowCancelButton(true)
                 .setCancelButtonIntent(
                     MediaButtonReceiver.buildMediaButtonPendingIntent(
@@ -304,13 +335,29 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
 
   public class MediaSessionCallback extends MediaSessionCompat.Callback {
     @Override
+
     public void onPlay() {
       Log.i(TAG, "MediaSessionCallback.onPlay");
-      startService(new Intent(AudiofileplayerService.this, AudiofileplayerService.class));
-      if (!mediaSession.isActive()) mediaSession.setActive(true);
       Notification notif = buildNotification();
-      // Display the notification and place the service in the foreground
-      startForeground(NOTIFICATION_ID, notif);
+
+      startService(new Intent(AudiofileplayerService.this, AudiofileplayerService.class));
+
+      // TESTING IF THIS HELPS WITH THE CRASHES & ANRS
+     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+
+       startForegroundService(new Intent(AudiofileplayerService.this, AudiofileplayerService.class));
+
+       // Display the notification and place the service in the foreground
+       startForeground(NOTIFICATION_ID, notif);
+
+      } else {
+       // print("running startService");
+        startService(new Intent(AudiofileplayerService.this, AudiofileplayerService.class));
+
+     }
+
+      if (!mediaSession.isActive()) mediaSession.setActive(true);
+
     }
 
     @Override
@@ -337,7 +384,9 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
       final KeyEvent event = (KeyEvent) mediaButtonEvent.getExtras().get(Intent.EXTRA_KEY_EVENT);
       if (event.getAction() == KeyEvent.ACTION_DOWN) {
         Log.i(TAG, "event key code:" + event.getKeyCode());
-        listener.onMediaButtonClick(event.getKeyCode());
+        if (listener != null) {
+          listener.onMediaButtonClick(event.getKeyCode());
+        }
       }
 
       return true;
@@ -346,7 +395,9 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     @Override
     public void onSeekTo(long positionMs) {
       Log.i(TAG, "MediaSessionCallback.onSeekTo:" + positionMs);
-      listener.onSeekTo(positionMs);
+      if (listener != null) {
+        listener.onSeekTo(positionMs);
+      }
     }
   }
 
