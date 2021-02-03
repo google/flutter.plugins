@@ -56,6 +56,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     void onSeekTo(long positionMs);
   }
 
+
   @Override
   public void onCreate() {
     super.onCreate();
@@ -81,8 +82,17 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     // TESTING IF THIS HELPS WITH THE CRASHES & ANRS
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       // Display the notification and place the service in the foreground
-      startForeground(NOTIFICATION_ID, notif);
+      //startForeground(NOTIFICATION_ID, notif);
+      String CHANNEL_ID = "GentleBirth";
+      NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+              "GentleBirth", NotificationManager.IMPORTANCE_NONE);
+      ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+      Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+              .setSmallIcon(getSmallIconId())
+              .setContentTitle("The app is running in the background")
+              .setContentText("Swipe for more information or to stop the app.").build();
 
+      startForeground(11241223, notification);
     }
 /*    if (Build.VERSION.SDK_INT >= 26) {
       String CHANNEL_ID = "GentleBirth";
@@ -230,7 +240,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
 
   private int getSmallIconId() {
     Context context = getApplicationContext();
-    String iconUri = "mipmap/ic_launcher";
+    String iconUri = "mipmap/notilogo72x72";
 
     try {
       ApplicationInfo ai =
@@ -300,9 +310,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
         // Set the media style to show icons for the Actions.
         .setStyle(
             new MediaStyle()
-                .setMediaSession(mediaSession.getSessionToken()
-                        // Commenting this so that there is no action when COMPACT to avoid some crashes that were happening.
-               // .setShowActionsInCompactView(compactNotificationActionIndices)
+                .setMediaSession(mediaSession.getSessionToken())
                 .setShowCancelButton(true)
                 .setCancelButtonIntent(
                     MediaButtonReceiver.buildMediaButtonPendingIntent(
