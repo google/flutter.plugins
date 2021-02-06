@@ -139,7 +139,7 @@ public class AudiofileplayerPlugin
     methodChannel = new MethodChannel(messenger, CHANNEL);
     methodChannel.setMethodCallHandler(this);
     mediaPlayers = new HashMap<>();
-    Context activeContext = activity != null ? activity : context;;
+    Context activeContext = activity != null ? activity : context;
     mediaBrowser =
         new MediaBrowserCompat(
             activeContext,

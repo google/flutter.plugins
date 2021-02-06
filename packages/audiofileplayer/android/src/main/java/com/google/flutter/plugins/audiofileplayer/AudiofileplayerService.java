@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.os.Build;
@@ -313,11 +314,21 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     @Override
     public void onPlay() {
       Log.i(TAG, "MediaSessionCallback.onPlay");
-      startService(new Intent(AudiofileplayerService.this, AudiofileplayerService.class));
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        startForegroundService(
+            new Intent(AudiofileplayerService.this, AudiofileplayerService.class));
+      } else {
+        startService(new Intent(AudiofileplayerService.this, AudiofileplayerService.class));
+      }
+
       if (!mediaSession.isActive()) mediaSession.setActive(true);
       Notification notif = buildNotification();
       // Display the notification and place the service in the foreground
-      startForeground(NOTIFICATION_ID, notif);
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        startForeground(NOTIFICATION_ID, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+      } else {
+        startForeground(NOTIFICATION_ID, notif);
+      }
     }
 
     @Override
