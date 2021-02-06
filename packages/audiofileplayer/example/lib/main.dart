@@ -107,7 +107,7 @@ class _MyAppState extends State<MyApp> {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: RaisedButton(
+                child: ElevatedButton(
                     onPressed: onTap,
                     child: isPlaying
                         ? Image.asset("assets/icons/ic_pause_black_48dp.png")
