@@ -40,18 +40,18 @@ class _MyAppState extends State<MyApp> {
     final List<Widget> children = <Widget>[
       new Padding(
         padding: const EdgeInsets.all(8.0),
-        child: new RaisedButton(
+        child: new ElevatedButton(
             onPressed: checkPermission, child: const Text("Check permission")),
       ),
       new Padding(
         padding: const EdgeInsets.all(8.0),
-        child: new RaisedButton(
+        child: new ElevatedButton(
             onPressed: requestPermission,
             child: const Text("Request permission")),
       ),
       new Padding(
           padding: const EdgeInsets.all(8.0),
-          child: new RaisedButton(
+          child: new ElevatedButton(
               onPressed: fetchCallLogs, child: const Text("Fetch phone log"))),
     ];
 

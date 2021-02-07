@@ -29,7 +29,8 @@
             </intent-filter>
         </activity>
 
-        <service android:name="com.google.flutter.plugins.audiofileplayer.AudiofileplayerService">
+        <service android:name="com.google.flutter.plugins.audiofileplayer.AudiofileplayerService"
+            android:foregroundServiceType="mediaPlayback">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>

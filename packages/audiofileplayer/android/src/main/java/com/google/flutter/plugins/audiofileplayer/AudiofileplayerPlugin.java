@@ -23,6 +23,7 @@ import android.view.KeyEvent;
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.media.session.MediaButtonReceiver;
+import io.flutter.FlutterInjector;
 import io.flutter.embedding.engine.loader.FlutterLoader;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
@@ -32,7 +33,6 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
-import io.flutter.plugin.common.PluginRegistry.Registrar;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -121,8 +121,6 @@ public class AudiofileplayerPlugin
   // Used when defining an Intent from a custom media button.
   public static final String CUSTOM_MEDIA_BUTTON_EXTRA_KEY = "customMediaButton";
 
-  private Registrar registrar;
-  // Activity used by v2 embedding.
   private Activity activity;
   private Map<String, ManagedMediaPlayer> mediaPlayers;
   private MethodChannel methodChannel;
@@ -130,13 +128,6 @@ public class AudiofileplayerPlugin
 
   private MediaBrowserCompat mediaBrowser;
   private MediaControllerCompat mediaController;
-
-  public static void registerWith(Registrar registrar) {
-    AudiofileplayerPlugin instance = new AudiofileplayerPlugin();
-    instance.registrar = registrar;
-    instance.initInstance(registrar.messenger(), registrar.context());
-    instance.registerLifecycleCallbacks(instance.activity());
-  }
 
   private void registerLifecycleCallbacks(Activity activity) {
     LifecycleCallbacks callbacks = new LifecycleCallbacks(this, activity.hashCode());
@@ -148,26 +139,13 @@ public class AudiofileplayerPlugin
     methodChannel = new MethodChannel(messenger, CHANNEL);
     methodChannel.setMethodCallHandler(this);
     mediaPlayers = new HashMap<>();
-    Context activeContext = activeContext();
+    Context activeContext = activity != null ? activity : context;
     mediaBrowser =
         new MediaBrowserCompat(
             activeContext,
             new ComponentName(activeContext, AudiofileplayerService.class),
             connectionCallback,
             null);
-  }
-
-  private Activity activity() {
-    return activity != null ? activity : registrar.activity();
-  }
-
-  private Context activeContext() {
-    // for v2 activity context
-    if (activity != null) {
-      return activity;
-    }
-    // if it's v1, use registrar
-    return registrar != null ? registrar.activeContext() : context;
   }
 
   @Override
@@ -187,7 +165,7 @@ public class AudiofileplayerPlugin
 
   private void attachToActivity(ActivityPluginBinding activityPluginBinding) {
     this.activity = activityPluginBinding.getActivity();
-    registerLifecycleCallbacks(activity());
+    registerLifecycleCallbacks(activity);
   }
 
   private void detachToActivity() {
@@ -339,7 +317,9 @@ public class AudiofileplayerPlugin
       if (call.argument(FLUTTER_PATH) != null) {
         String flutterPath = call.argument(FLUTTER_PATH).toString();
         AssetManager assetManager = context.getAssets();
-        String key = FlutterLoader.getInstance().getLookupKeyForAsset(flutterPath);
+        FlutterLoader flutterLoader = FlutterInjector.instance().flutterLoader();
+        flutterLoader.startInitialization(context);
+        String key = flutterLoader.getLookupKeyForAsset(flutterPath);
         AssetFileDescriptor fd = assetManager.openFd(key);
         ManagedMediaPlayer newPlayer =
             new LocalManagedMediaPlayer(audioId, fd, this, looping, playInBackground);
@@ -530,7 +510,6 @@ public class AudiofileplayerPlugin
         public void onConnected() {
           Log.i(TAG, "ConnectionCallback.onConnected");
           try {
-            Activity activity = activity();
             MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
             mediaController = new MediaControllerCompat(activity, token);
             MediaControllerCompat.setMediaController(activity, mediaController);
