@@ -62,6 +62,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     super.onCreate();
     Log.i(TAG, "onCreate");
     instance = this;
+    Notification notif = buildNotification();
 
     mediaSession = new MediaSessionCompat(this, TAG);
     mediaSession.setFlags(
@@ -76,7 +77,23 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     mediaSession.setCallback(mediaSessionCallback);
 
     setSessionToken(mediaSession.getSessionToken());
-  }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      // Display the notification and place the service in the foreground
+      //startForeground(NOTIFICATION_ID, notif);
+      String CHANNEL_ID = "GentleBirth";
+      NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+              "GentleBirth", NotificationManager.IMPORTANCE_NONE);
+      ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+      Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+              .setSmallIcon(getSmallIconId())
+              .setContentTitle("The app is running in the background")
+              .setContentText("Swipe for more information or to stop the app.").build();
+
+      startForeground(11241223, notification);
+    }
+
+  } 
 
   @Override
   public BrowserRoot onGetRoot(String clientPackageName, int clientUid, Bundle rootHints) {
