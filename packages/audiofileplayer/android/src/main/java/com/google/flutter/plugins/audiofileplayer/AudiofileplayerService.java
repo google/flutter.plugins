@@ -76,7 +76,6 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     mediaSession.setCallback(mediaSessionCallback);
 
     setSessionToken(mediaSession.getSessionToken());
-
   } 
 
   @Override
