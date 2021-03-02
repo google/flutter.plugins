@@ -90,7 +90,8 @@ To use the plugin's custom foreground service, add this within the <manifest\> t
 
 ...and this within the \<application\> tag of your AndroidManifest.xml.
 ```xml
-<service android:name="com.google.flutter.plugins.audiofileplayer.AudiofileplayerService">
+<service android:name="com.google.flutter.plugins.audiofileplayer.AudiofileplayerService"
+    android:foregroundServiceType="mediaPlayback">
     <intent-filter>
         <action android:name="android.media.browse.MediaBrowserService" />
     </intent-filter>
