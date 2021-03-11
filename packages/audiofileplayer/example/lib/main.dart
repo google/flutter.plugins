@@ -354,7 +354,7 @@ class _MyAppState extends State<MyApp> {
                 _audio.pause();
               } else {
                 await _audio.seek(5);
-                _audio.resume(10);
+                _audio.resume(endpointSeconds: 10);
               }
               setState(() => _audioPlaying = !_audioPlaying);
             }),
