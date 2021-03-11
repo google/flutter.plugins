@@ -1,3 +1,6 @@
+## 2.0.0 - 10 March 2021
+  * Migrate to null safety.
+
 ## 1.3.3 - 6 Feb 2021
   * Fix asset loading issue on Android.
   * Fix foreground notification issue on Android.
