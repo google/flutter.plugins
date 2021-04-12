@@ -39,6 +39,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Flutter audio file player plugin.
@@ -347,14 +348,17 @@ public class AudiofileplayerPlugin
         // Note that this will throw an exception on invalid URL or lack of network connectivity.
         RemoteManagedMediaPlayer newPlayer =
             new RemoteManagedMediaPlayer(audioId, remoteUrl, this, looping, playInBackground);
+        final AtomicBoolean remoteLoad = new AtomicBoolean(false);
         newPlayer.setOnRemoteLoadListener(
             (success) -> {
-              if (success) {
-                handleDurationForPlayer(newPlayer, audioId);
-                result.success(null);
-              } else {
-                mediaPlayers.remove(audioId);
-                result.error(ERROR_CODE, "Remote URL loading failed for URL: " + remoteUrl, null);
+              if (remoteLoad.compareAndSet(false, true)) {
+                if (success) {
+                  handleDurationForPlayer(newPlayer, audioId);
+                  result.success(null);
+                } else {
+                  mediaPlayers.remove(audioId);
+                  result.error(ERROR_CODE, "Remote URL loading failed for URL: " + remoteUrl, null);
+                }
               }
             });
         // Add player to data structure immediately; will be removed if async loading fails.
