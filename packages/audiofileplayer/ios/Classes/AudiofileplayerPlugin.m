@@ -122,6 +122,7 @@ static NSString *const kMediaSkipIntervalSeconds = @"skipIntervalSeconds";
             category = AVAudioSessionCategoryPlayAndRecord;
             [[AVAudioSession sharedInstance] setCategory:category withOptions:AVAudioSessionCategoryOptionMixWithOthers error:nil];
             [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];
+            result(nil);
             return;
         }
         if ([categoryString isEqualToString:kAudioCategoryAmbientSolo]) {
