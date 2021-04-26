@@ -15,6 +15,7 @@ const String setAndroidMediaButtonsMethod = 'setAndroidMediaButtons';
 const String mediaButtonsKey = 'mediaButtons';
 const String mediaCompactIndicesKey = 'mediaCompactIndices';
 const String stopBackgroundDisplayMethod = 'stopBackgroundDisplay';
+const String hideBackgroundDisplayMethod = 'hideBackgroundDisplay';
 
 // Constants for iOS category.
 const String iosAudioCategoryMethod = 'iosAudioCategory';
@@ -295,6 +296,16 @@ class AudioSystem {
       await audioMethodChannel.invokeMethod<dynamic>(stopBackgroundDisplayMethod);
     } on PlatformException catch (e) {
       _logger.severe('stopBackgroundDisplay error', e);
+    }
+  }
+
+  /// this hides the supported controls and metadata from the
+  /// lockscreen/control center.
+  void hideBackgroundDisplay() async {
+    try {
+      await audioMethodChannel.invokeMethod<dynamic>(hideBackgroundDisplayMethod);
+    } on PlatformException catch (e) {
+      _logger.severe('hideBackgroundDisplay error', e);
     }
   }
 

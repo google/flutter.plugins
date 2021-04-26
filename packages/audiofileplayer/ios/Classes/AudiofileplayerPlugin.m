@@ -25,6 +25,7 @@ static NSString *const kDurationSeconds = @"duration_seconds";
 static NSString *const kOnPositionCallback = @"onPosition";
 static NSString *const kPositionSeconds = @"position_seconds";
 static NSString *const kStopBackgroundDisplay = @"stopBackgroundDisplay";
+static NSString *const kHideBackgroundDisplay = @"hideBackgroundDisplay";
 static NSString *const kErrorCode = @"AudioPluginError";
 
 static NSString *const kAudioCategoryMethod = @"iosAudioCategory";
@@ -155,6 +156,10 @@ static NSString *const kMediaSkipIntervalSeconds = @"skipIntervalSeconds";
         [_nowPlayingInfo removeAllObjects];
         MPNowPlayingInfoCenter.defaultCenter.nowPlayingInfo = _nowPlayingInfo;
         [self disableCommandHandlers];
+        result(nil);
+        return;
+    } else if ([call.method isEqualToString:kHideBackgroundDisplay]) {
+        [self removeCommandHandlers];
         result(nil);
         return;
     }
