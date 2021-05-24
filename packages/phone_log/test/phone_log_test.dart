@@ -1,15 +1,12 @@
 import 'package:fixnum/fixnum.dart';
-import 'package:flutter/widgets.dart' show WidgetsFlutterBinding;
 import 'package:flutter/services.dart';
-import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 import 'package:phone_log/phone_log.dart';
 
 typedef Future<dynamic> Handler(MethodCall call);
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-
   String invokedMethod;
   dynamic arguments;
   Handler mockChannel;
@@ -63,7 +60,7 @@ void main() {
   });
 
   group('Phone log plugin', () {
-    test('fetch phone log', () async {
+    testWidgets('fetch phone log', (WidgetTester tester) async {
       channel.setMockMethodCallHandler(mockChannelForGetLogs);
 
       final Iterable<CallRecord> records = await phoneLog.getPhoneLogs(
@@ -86,7 +83,7 @@ void main() {
           <String, String>{'startDate': '123456789', 'duration': '12'});
     });
 
-    test('check permission', () async {
+    testWidgets('check permission', (WidgetTester tester) async {
       channel.setMockMethodCallHandler(mockChannel);
 
       await phoneLog.checkPermission();
@@ -113,7 +110,7 @@ void main() {
       expect(permissionCannotRequest, PermissionStatus.deniedAndCannotRequest);
     });
 
-    test('request permission', () async {
+    testWidgets('request permission', (WidgetTester tester) async {
       channel.setMockMethodCallHandler(mockChannel);
 
       await phoneLog.requestPermission();
