@@ -1,3 +1,7 @@
+## 2.0.1 - 27 May 2021
+  * Fix null safety bugs with platform media buttons.
+  * Update example app to null safety.
+
 ## 2.0.0 - 10 March 2021
   * Migrate to null safety.
 
