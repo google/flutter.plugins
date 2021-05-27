@@ -762,18 +762,18 @@ class Audio with WidgetsBindingObserver {
   @visibleForTesting
   static Future<void> handleMethodCall(MethodCall call) async {
     final Map<dynamic, dynamic> arguments = call.arguments;
-    final String audioId = arguments[audioIdKey];
+    final String? audioId = arguments[audioIdKey];
     switch (call.method) {
       case onCompleteCallback:
-        _onCompleteNative(audioId);
+        _onCompleteNative(audioId!);
         break;
       case onDurationCallback:
         final double durationSeconds = arguments[durationSecondsKey];
-        _onDurationNative(audioId, durationSeconds);
+        _onDurationNative(audioId!, durationSeconds);
         break;
       case onPositionCallback:
         final double positionSeconds = arguments[positionSecondsKey];
-        _onPositionNative(audioId, positionSeconds);
+        _onPositionNative(audioId!, positionSeconds);
         break;
       case onMediaEventCallback:
         AudioSystem.instance.handleNativeMediaEventCallback(arguments);
