@@ -124,8 +124,8 @@ void main() {
 
     test('onComplete, onPosition, onDuration called, even after dispose()', () {
       bool onCompleteCalled = false;
-      double duration;
-      double position;
+      double? duration;
+      double? position;
       Audio.load('foo.wav',
           onComplete: () => onCompleteCalled = true,
           onDuration: (double d) => duration = d,
@@ -173,8 +173,8 @@ void main() {
 
     test('remove callbacks', () {
       bool onCompleteCalled = false;
-      double duration;
-      double position;
+      double? duration;
+      double? position;
       Audio.load('foo.wav',
           onComplete: () => onCompleteCalled = true,
           onDuration: (double d) => duration = d,
