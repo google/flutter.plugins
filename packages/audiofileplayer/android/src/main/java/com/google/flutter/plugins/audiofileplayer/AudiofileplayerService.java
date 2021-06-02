@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.os.Build;
@@ -105,6 +106,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
       startForeground(1, notification);
     }*/
   }
+  
 
   @Override
   public BrowserRoot onGetRoot(String clientPackageName, int clientUid, Bundle rootHints) {
@@ -124,15 +126,15 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
   public int onStartCommand(final Intent intent, int flags, int startId) {
     Log.i(TAG, "onStartCommand");
 
-    if (intent != null){
+    if (intent != null) {
       if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())
-              && intent.hasExtra(AudiofileplayerPlugin.CUSTOM_MEDIA_BUTTON_EXTRA_KEY)) {
+          && intent.hasExtra(AudiofileplayerPlugin.CUSTOM_MEDIA_BUTTON_EXTRA_KEY)) {
         // Check for custom button intent.
         handleCustomButtonIntent(intent);
       } else {
         // If there is a KeyEvent in the intent, send it to the MediaButtonReceiver to pass to
         // its callbacks.
-        if (mediaSession != null){
+        if (mediaSession != null) {
           MediaButtonReceiver.handleIntent(mediaSession, intent);
         }
       }
@@ -182,7 +184,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     String eventId =
         (String) intent.getExtras().get(AudiofileplayerPlugin.CUSTOM_MEDIA_BUTTON_EXTRA_KEY);
     Log.d(TAG, "Got custom button intent with eventId:" + eventId);
-    if (listener != null){
+    if (listener != null) {
       listener.onCustomMediaButtonClick(eventId);
     }
   }
@@ -190,6 +192,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
   public void stop() {
     metadata = null;
     if (notificationActions != null) notificationActions.clear();
+    this.compactNotificationActionIndices = new int[0];
     PlaybackStateCompat.Builder builder =
         new PlaybackStateCompat.Builder()
             .setActions(0)
@@ -346,26 +349,22 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
 
     public void onPlay() {
       Log.i(TAG, "MediaSessionCallback.onPlay");
-      Notification notif = buildNotification();
 
-      startService(new Intent(AudiofileplayerService.this, AudiofileplayerService.class));
-
-      // TESTING IF THIS HELPS WITH THE CRASHES & ANRS
-     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-       startForegroundService(new Intent(AudiofileplayerService.this, AudiofileplayerService.class));
-
-       // Display the notification and place the service in the foreground
-       startForeground(NOTIFICATION_ID, notif);
-
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        startForegroundService(
+            new Intent(AudiofileplayerService.this, AudiofileplayerService.class));
       } else {
-       // print("running startService");
         startService(new Intent(AudiofileplayerService.this, AudiofileplayerService.class));
-
-     }
+      }
 
       if (!mediaSession.isActive()) mediaSession.setActive(true);
-
+      Notification notif = buildNotification();
+      // Display the notification and place the service in the foreground
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        startForeground(NOTIFICATION_ID, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+      } else {
+        startForeground(NOTIFICATION_ID, notif);
+      }
     }
 
     @Override

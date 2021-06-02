@@ -1,3 +1,19 @@
+## 1.3.3 - 6 Feb 2021
+  * Fix asset loading issue on Android.
+  * Fix foreground notification issue on Android.
+
+## 1.3.2 - 11 August 2020
+  * Fix notification stop/restart issue on Android.
+
+## 1.3.1 - 23 May 2020
+  * Fix null pointer issues on Android.
+
+## 1.3.0 - 27 Mar 2020
+  * Migrate to Android v2 embedding.
+
+## 1.2.0 - 28 Dec 2019
+  * Add loading audio from local files, via Audio.loadFromAbsolutePath().
+
 ## 1.1.1 - 28 Dec 2019
   * README tweaks.
 
@@ -24,4 +40,3 @@
 ## 1.0.0 - 7 Nov 2019
 
   * Initial open source release
-

@@ -6,6 +6,7 @@
 static NSString *const kChannel = @"audiofileplayer";
 static NSString *const kLoadMethod = @"load";
 static NSString *const kFlutterPath = @"flutterPath";
+static NSString *const kAbsolutePath = @"absolutePath";
 static NSString *const kAudioBytes = @"audioBytes";
 static NSString *const kRemoteUrl = @"remoteUrl";
 static NSString *const kAudioId = @"audioId";
@@ -239,12 +240,37 @@ static NSString *const kMediaSkipIntervalSeconds = @"skipIntervalSeconds";
                                              isLooping:isLooping];
     _playersDict[audioId] = player;
     result(nil);
+  } else if (call.arguments[kAbsolutePath] != [NSNull null]) {
+    NSString *absolutePath = call.arguments[kAbsolutePath];
+    player = [[FLTManagedPlayer alloc] initWithAudioId:audioId
+                                                  path:absolutePath
+                                              delegate:self
+                                             isLooping:isLooping];
+    if (!player) {
+      result([FlutterError
+          errorWithCode:kErrorCode
+                message:[NSString
+                            stringWithFormat:@"Could not load from absolute path %@ for audio %@ ",
+                                             absolutePath, audioId]
+                details:nil]);
+      return;
+    }
+    _playersDict[audioId] = player;
+    result(nil);
   } else if (call.arguments[kAudioBytes] != [NSNull null]) {
     FlutterStandardTypedData *flutterData = call.arguments[kAudioBytes];
     player = [[FLTManagedPlayer alloc] initWithAudioId:audioId
                                                   data:[flutterData data]
                                               delegate:self
                                              isLooping:isLooping];
+    if (!player) {
+      result([FlutterError
+          errorWithCode:kErrorCode
+                message:[NSString stringWithFormat:@"Could not load from audio bytes for audio %@ ",
+                                                   audioId]
+                details:nil]);
+      return;
+    }
     _playersDict[audioId] = player;
     result(nil);
   } else if (call.arguments[kRemoteUrl] != [NSNull null]) {
@@ -278,7 +304,7 @@ static NSString *const kMediaSkipIntervalSeconds = @"skipIntervalSeconds";
   } else {
     result([FlutterError errorWithCode:kErrorCode
                                message:@"Could not create ManagedMediaPlayer with neither "
-                                       @"flutterPath nor audioBytes nor remoteUrl"
+                                       @"flutterPath nor absolutePath nor audioBytes nor remoteUrl"
                                details:nil]);
   }
 }

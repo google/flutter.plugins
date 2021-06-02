@@ -1,11 +1,11 @@
 name: phone_log
 description: A new flutter plugin project.
-version: 0.0.6
+version: 0.0.7+1
 author: Jiaming Cheng <jiamingc@google.com>
 homepage: https://github.com/jiajiabingcheng/phone_log
 
 environment:
-  sdk: ">=2.0.0 <3.0.0"
+  sdk: ">=2.1.0 <3.0.0"
 
 dependencies:
   flutter:

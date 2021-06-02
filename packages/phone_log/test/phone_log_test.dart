@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/widgets.dart' show WidgetsFlutterBinding;
 import 'package:flutter/services.dart';

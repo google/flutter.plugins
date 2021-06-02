@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+import 'dart:io' show Directory, Platform;
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -8,6 +8,7 @@ import 'package:audiofileplayer/audio_system.dart';
 import 'package:logging/logging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:path_provider/path_provider.dart';
 
 final Logger _logger = Logger('audiofileplayer_example');
 
@@ -48,7 +49,13 @@ class _MyAppState extends State<MyApp> {
   double _backgroundAudioDurationSeconds;
   double _backgroundAudioPositionSeconds = 0;
 
-  /// The iOS audio category dropdown item in the fifth card.
+  /// Local file data for the fifth card.
+  String _documentsPath;
+  Audio _documentAudio;
+  bool _documentAudioPlaying = false;
+  String _documentErrorMessage;
+
+  /// The iOS audio category dropdown item in the last (iOS-only) card.
   IosAudioCategory _iosAudioCategory = IosAudioCategory.playback;
 
   @override
@@ -77,6 +84,8 @@ class _MyAppState extends State<MyApp> {
         looping: true,
         playInBackground: true);
     _backgroundAudioPlaying = false;
+    // Fifth card.
+    _loadDocumentPathAudio();
   }
 
   @override
@@ -98,7 +107,7 @@ class _MyAppState extends State<MyApp> {
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: RaisedButton(
+                child: ElevatedButton(
                     onPressed: onTap,
                     child: isPlaying
                         ? Image.asset("assets/icons/ic_pause_black_48dp.png")
@@ -174,6 +183,24 @@ class _MyAppState extends State<MyApp> {
               _remoteAudio = null;
               _remoteAudioPlaying = false;
               _remoteAudioLoading = false;
+            }));
+  }
+
+  /// Load audio from local file 'foo.mp3'.
+  ///
+  /// For Android, use external directory. For iOS, use documents directory.
+  void _loadDocumentPathAudio() async {
+    final Directory directory = Platform.isAndroid
+        ? await getExternalStorageDirectory()
+        : await getApplicationDocumentsDirectory();
+    setState(() => _documentsPath = directory.path);
+
+    _documentAudio = Audio.loadFromAbsolutePath(
+        '$_documentsPath${Platform.pathSeparator}foo.mp3',
+        onComplete: () => setState(() => _documentAudioPlaying = false),
+        onError: (String message) => setState(() {
+              _documentErrorMessage = message;
+              _documentAudio.dispose();
             }));
   }
 
@@ -423,6 +450,23 @@ class _MyAppState extends State<MyApp> {
               () => _backgroundAudioPlaying
                   ? _pauseBackgroundAudio()
                   : _resumeBackgroundAudio()),
+        ]),
+        _cardWrapper(<Widget>[
+          Text(
+            'Example 5: load local files from disk.\n\nPut a file named \'foo.mp3\' in the app\'s ${Platform.isAndroid ? 'external files' : 'documents'} folder, then restart the app.',
+            textAlign: TextAlign.center,
+          ),
+          _transportButtonWithTitle(
+              _documentAudioPlaying ? 'pause' : 'play', _documentAudioPlaying,
+              () {
+            _documentAudioPlaying
+                ? _documentAudio.pause()
+                : _documentAudio.play();
+            setState(() => _documentAudioPlaying = !_documentAudioPlaying);
+          }),
+          if (_documentErrorMessage != null)
+            Text(_documentErrorMessage,
+                style: const TextStyle(color: const Color(0xFFFF0000)))
         ]),
         if (Platform.isIOS)
           _cardWrapper(<Widget>[
