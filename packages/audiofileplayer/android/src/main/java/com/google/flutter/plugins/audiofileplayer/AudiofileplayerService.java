@@ -80,8 +80,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     Notification notif = buildNotification();
 
 
-    // TESTING IF THIS HELPS WITH THE CRASHES & ANRS
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       // Display the notification and place the service in the foreground
       //startForeground(NOTIFICATION_ID, notif);
       String CHANNEL_ID = "GentleBirth";
@@ -90,8 +89,8 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
       ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
       Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
               .setSmallIcon(getSmallIconId())
-              .setContentTitle("The app is running in the background")
-              .setContentText("Swipe for more information or to stop the app.").build();
+              .setContentTitle("The app is running")
+              .setContentText("This ensures a better experience for you with GentleBirth.").build();
 
       startForeground(11241223, notification);
     }
