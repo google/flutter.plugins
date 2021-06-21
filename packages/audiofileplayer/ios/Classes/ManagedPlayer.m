@@ -53,7 +53,7 @@ static float const kTimerUpdateIntervalSeconds = 0.25;
                                      if (strongSelf) {
                                        if (strongSelf->_audioPlayer.playing) {
                                          [strongSelf->_delegate
-                                             managedPlayerDidUpdatePosition:_audioPlayer.currentTime
+                                          managedPlayerDidUpdatePosition:strongSelf->_audioPlayer.currentTime
                                                                  forAudioId:strongSelf->_audioId];
                                        }
                                      }
@@ -84,7 +84,7 @@ static float const kTimerUpdateIntervalSeconds = 0.25;
                     FLTManagedPlayer *strongSelf = weakSelf;
                     if (strongSelf) {
                       [strongSelf->_avPlayer seekToTime:kCMTimeZero];
-                      [strongSelf->_delegate managedPlayerDidFinishPlaying:_audioId];
+                      [strongSelf->_delegate managedPlayerDidFinishPlaying:strongSelf->_audioId];
                     }
                   }];
       [_avPlayer.currentItem addObserver:self
@@ -195,7 +195,7 @@ static float const kTimerUpdateIntervalSeconds = 0.25;
                                    FLTManagedPlayer *strongSelf = weakSelf;
                                    if (strongSelf) {
                                      [strongSelf pause];
-                                     [strongSelf->_delegate managedPlayerDidFinishPlaying:_audioId];
+                                     [strongSelf->_delegate managedPlayerDidFinishPlaying:strongSelf->_audioId];
                                    }
                                  }];
   }
@@ -214,7 +214,7 @@ static float const kTimerUpdateIntervalSeconds = 0.25;
   }
 }
 
-- (void)seek:(NSTimeInterval)position completionHandler:(void (^)())completionHandler {
+- (void)seek:(NSTimeInterval)position completionHandler:(void (^)(void))completionHandler {
   if (_audioPlayer) {
     _audioPlayer.currentTime = position;
     completionHandler();
