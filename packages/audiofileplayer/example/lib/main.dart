@@ -26,34 +26,34 @@ class _MyAppState extends State<MyApp> {
   static const String newReleasesButtonId = 'newReleasesButtonId';
 
   /// Preloaded audio data for the first card.
-  Audio _audio;
+  late Audio _audio;
   bool _audioPlaying = false;
-  double _audioDurationSeconds;
-  double _audioPositionSeconds;
+  double? _audioDurationSeconds;
+  double? _audioPositionSeconds;
   double _audioVolume = 1.0;
   double _seekSliderValue = 0.0; // Normalized 0.0 - 1.0.
 
   /// On-the-fly audio data for the second card.
   int _spawnedAudioCount = 0;
-  ByteData _audioByteData;
+  ByteData? _audioByteData;
 
   /// Remote url audio data for the third card.
-  Audio _remoteAudio;
+  Audio? _remoteAudio;
   bool _remoteAudioPlaying = false;
   bool _remoteAudioLoading = false;
-  String _remoteErrorMessage;
+  String? _remoteErrorMessage;
 
   /// Background audio data for the fourth card.
-  Audio _backgroundAudio;
-  bool _backgroundAudioPlaying;
-  double _backgroundAudioDurationSeconds;
+  late Audio _backgroundAudio;
+  late bool _backgroundAudioPlaying;
+  double? _backgroundAudioDurationSeconds;
   double _backgroundAudioPositionSeconds = 0;
 
   /// Local file data for the fifth card.
-  String _documentsPath;
-  Audio _documentAudio;
+  late Audio _documentAudio;
+  String? _documentsPath;
   bool _documentAudioPlaying = false;
-  String _documentErrorMessage;
+  String? _documentErrorMessage;
 
   /// The iOS audio category dropdown item in the last (iOS-only) card.
   IosAudioCategory _iosAudioCategory = IosAudioCategory.playback;
@@ -69,7 +69,7 @@ class _MyAppState extends State<MyApp> {
             setState(() => _audioDurationSeconds = durationSeconds),
         onPosition: (double positionSeconds) => setState(() {
               _audioPositionSeconds = positionSeconds;
-              _seekSliderValue = _audioPositionSeconds / _audioDurationSeconds;
+              _seekSliderValue = _audioPositionSeconds! / _audioDurationSeconds!;
             }));
     // Second card.
     _loadAudioByteData();
@@ -93,14 +93,14 @@ class _MyAppState extends State<MyApp> {
     AudioSystem.instance.removeMediaEventListener(_mediaEventListener);
     _audio.dispose();
     if (_remoteAudio != null) {
-      _remoteAudio.dispose();
+      _remoteAudio!.dispose();
     }
     _backgroundAudio.dispose();
     super.dispose();
   }
 
   static Widget _transportButtonWithTitle(
-          String title, bool isPlaying, VoidCallback onTap) =>
+          String title, bool isPlaying, VoidCallback? onTap) =>
       Padding(
           padding: const EdgeInsets.all(4.0),
           child: Column(
@@ -121,7 +121,7 @@ class _MyAppState extends State<MyApp> {
           ));
 
   /// Convert double seconds to String minutes:seconds.
-  static String _stringForSeconds(double seconds) {
+  static String? _stringForSeconds(double? seconds) {
     if (seconds == null) return null;
     return '${(seconds ~/ 60)}:${(seconds.truncate() % 60).toString().padLeft(2, '0')}';
   }
@@ -143,16 +143,16 @@ class _MyAppState extends State<MyApp> {
     } else if (type == MediaActionType.stop) {
       _stopBackgroundAudio();
     } else if (type == MediaActionType.seekTo) {
-      _backgroundAudio.seek(mediaEvent.seekToPositionSeconds);
+      _backgroundAudio.seek(mediaEvent.seekToPositionSeconds!);
       AudioSystem.instance
-          .setPlaybackState(true, mediaEvent.seekToPositionSeconds);
+          .setPlaybackState(true, mediaEvent.seekToPositionSeconds!);
     } else if (type == MediaActionType.skipForward) {
-      final double skipIntervalSeconds = mediaEvent.skipIntervalSeconds;
+      final double? skipIntervalSeconds = mediaEvent.skipIntervalSeconds;
       _logger.info(
           'Skip-forward event had skipIntervalSeconds $skipIntervalSeconds.');
       _logger.info('Skip-forward is not implemented in this example app.');
     } else if (type == MediaActionType.skipBackward) {
-      final double skipIntervalSeconds = mediaEvent.skipIntervalSeconds;
+      final double? skipIntervalSeconds = mediaEvent.skipIntervalSeconds;
       _logger.info(
           'Skip-backward event had skipIntervalSeconds $skipIntervalSeconds.');
       _logger.info('Skip-backward is not implemented in this example app.');
@@ -177,9 +177,9 @@ class _MyAppState extends State<MyApp> {
     _remoteAudioLoading = true;
     _remoteAudio = Audio.loadFromRemoteUrl('https://streams.kqed.org/kqedradio',
         onDuration: (_) => setState(() => _remoteAudioLoading = false),
-        onError: (String message) => setState(() {
+        onError: (String? message) => setState(() {
               _remoteErrorMessage = message;
-              _remoteAudio.dispose();
+              _remoteAudio!.dispose();
               _remoteAudio = null;
               _remoteAudioPlaying = false;
               _remoteAudioLoading = false;
@@ -190,15 +190,15 @@ class _MyAppState extends State<MyApp> {
   ///
   /// For Android, use external directory. For iOS, use documents directory.
   void _loadDocumentPathAudio() async {
-    final Directory directory = Platform.isAndroid
+    final Directory? directory = Platform.isAndroid
         ? await getExternalStorageDirectory()
         : await getApplicationDocumentsDirectory();
-    setState(() => _documentsPath = directory.path);
+    setState(() => _documentsPath = directory!.path);
 
     _documentAudio = Audio.loadFromAbsolutePath(
         '$_documentsPath${Platform.pathSeparator}foo.mp3',
         onComplete: () => setState(() => _documentAudioPlaying = false),
-        onError: (String message) => setState(() {
+        onError: (String? message) => setState(() {
               _documentErrorMessage = message;
               _documentAudio.dispose();
             }));
@@ -307,7 +307,7 @@ class _MyAppState extends State<MyApp> {
         .endRecording()
         .toImage(size.width.toInt(), size.height.toInt());
     final ByteData encodedImageData =
-        await image.toByteData(format: ui.ImageByteFormat.png);
+        (await image.toByteData(format: ui.ImageByteFormat.png))!;
     return encodedImageData.buffer.asUint8List();
   }
 
@@ -370,7 +370,7 @@ class _MyAppState extends State<MyApp> {
               value: _seekSliderValue,
               onChanged: (double val) {
                 setState(() => _seekSliderValue = val);
-                final double positionSeconds = val * _audioDurationSeconds;
+                final double positionSeconds = val * _audioDurationSeconds!;
                 _audio.seek(positionSeconds);
               }),
           const Text('drag to seek'),
@@ -401,7 +401,7 @@ class _MyAppState extends State<MyApp> {
                 _audioByteData == null
                     ? null
                     : () {
-                        Audio.loadFromByteData(_audioByteData,
+                        Audio.loadFromByteData(_audioByteData!,
                             onComplete: () =>
                                 setState(() => --_spawnedAudioCount))
                           ..play()
@@ -427,15 +427,15 @@ class _MyAppState extends State<MyApp> {
                         // seek to the start of a file, which, for streams, will
                         // fail with an error on Android platforms, so streams
                         // should use resume() to begin playback.
-                        _remoteAudio.resume();
+                        _remoteAudio!.resume();
                         setState(() => _remoteAudioPlaying = true);
                       } else {
-                        _remoteAudio.pause();
+                        _remoteAudio!.pause();
                         setState(() => _remoteAudioPlaying = false);
                       }
                     }),
           _remoteErrorMessage != null
-              ? Text(_remoteErrorMessage,
+              ? Text(_remoteErrorMessage!,
                   style: const TextStyle(color: const Color(0xFFFF0000)))
               : Text(_remoteAudioLoading ? 'loading...' : 'loaded')
         ]),
@@ -465,7 +465,7 @@ class _MyAppState extends State<MyApp> {
             setState(() => _documentAudioPlaying = !_documentAudioPlaying);
           }),
           if (_documentErrorMessage != null)
-            Text(_documentErrorMessage,
+            Text(_documentErrorMessage!,
                 style: const TextStyle(color: const Color(0xFFFF0000)))
         ]),
         if (Platform.isIOS)
@@ -473,9 +473,9 @@ class _MyAppState extends State<MyApp> {
             const Text('(iOS only) iOS audio category:'),
             DropdownButton<IosAudioCategory>(
               value: _iosAudioCategory,
-              onChanged: (IosAudioCategory newValue) {
+              onChanged: (IosAudioCategory? newValue) {
                 setState(() {
-                  _iosAudioCategory = newValue;
+                  _iosAudioCategory = newValue!;
                   AudioSystem.instance.setIosAudioCategory(_iosAudioCategory);
                 });
               },
