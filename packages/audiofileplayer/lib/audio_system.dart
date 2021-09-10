@@ -114,13 +114,13 @@ class AudioMetadata {
     this.durationSeconds,
     this.artBytes,
   });
-  final String id;
-  final String title;
-  final String artist;
-  final String album;
-  final String genre;
-  final double durationSeconds;
-  final Uint8List artBytes;
+  final String? id;
+  final String? title;
+  final String? artist;
+  final String? album;
+  final String? genre;
+  final double? durationSeconds;
+  final Uint8List? artBytes;
 }
 
 /// Sends information to the OS's background audio system.
@@ -199,7 +199,7 @@ class AudioSystem {
   ///
   /// Informs device displays and external controllers (e.g. watch/auto) on
   /// what controls to display.
-  void setSupportedMediaActions(Set<MediaActionType> actions, {double skipIntervalSeconds}) async {
+  void setSupportedMediaActions(Set<MediaActionType> actions, {double? skipIntervalSeconds}) async {
     const Map<MediaActionType, String> mediaActionTypeToString = <MediaActionType, String>{
       MediaActionType.playPause: mediaPlayPause,
       MediaActionType.pause: mediaPause,
@@ -213,7 +213,7 @@ class AudioSystem {
       MediaActionType.skipBackward: mediaSkipBackward,
     };
 
-    final List<String> actionStrings = actions.map((MediaActionType type) => mediaActionTypeToString[type]).toList();
+    final List<String> actionStrings = actions.map((MediaActionType type) => mediaActionTypeToString[type]!).toList();
 
     final Map<String, dynamic> map = <String, dynamic>{mediaActionsKey: actionStrings};
 
@@ -234,7 +234,7 @@ class AudioSystem {
   /// of three.
   ///
   /// Only supported on Android; no-op otherwise.
-  void setAndroidNotificationButtons(List<dynamic> androidMediaButtons, {List<int> androidCompactIndices}) async {
+  void setAndroidNotificationButtons(List<dynamic> androidMediaButtons, {List<int>? androidCompactIndices}) async {
     const Map<AndroidMediaButtonType, String> androidMediaButtonTypeToString = <AndroidMediaButtonType, String>{
       AndroidMediaButtonType.stop: mediaStop,
       AndroidMediaButtonType.pause: mediaPause,
@@ -248,25 +248,23 @@ class AudioSystem {
     if (!Platform.isAndroid) return;
 
     try {
-      final List<dynamic> androidMediaButtonsData = androidMediaButtons == null
-          ? <dynamic>[]
-          : androidMediaButtons.map((dynamic buttonTypeOrCustomButton) {
-              if (buttonTypeOrCustomButton is AndroidMediaButtonType) {
-                final AndroidMediaButtonType buttonType = buttonTypeOrCustomButton;
-                return androidMediaButtonTypeToString[buttonType];
-              } else if (buttonTypeOrCustomButton is AndroidCustomMediaButton) {
-                final AndroidCustomMediaButton customMediaButton = buttonTypeOrCustomButton;
-                return <String, String>{
-                  mediaCustomTitleKey: customMediaButton.title,
-                  mediaCustomEventIdKey: customMediaButton.eventId,
-                  mediaCustomDrawableResourceKey: customMediaButton.drawableResource,
-                };
-              } else {
-                _logger.severe('androidMediaButtons must only contain instances of '
-                    'AndroidMediaButtonType or AndroidCustomMediaButton');
-                return null;
-              }
-            }).toList();
+      final List<dynamic> androidMediaButtonsData = androidMediaButtons.map((dynamic buttonTypeOrCustomButton) {
+        if (buttonTypeOrCustomButton is AndroidMediaButtonType) {
+          final AndroidMediaButtonType buttonType = buttonTypeOrCustomButton;
+          return androidMediaButtonTypeToString[buttonType];
+        } else if (buttonTypeOrCustomButton is AndroidCustomMediaButton) {
+          final AndroidCustomMediaButton customMediaButton = buttonTypeOrCustomButton;
+          return <String, String>{
+            mediaCustomTitleKey: customMediaButton.title,
+            mediaCustomEventIdKey: customMediaButton.eventId,
+            mediaCustomDrawableResourceKey: customMediaButton.drawableResource,
+          };
+        } else {
+          _logger.severe('androidMediaButtons must only contain instances of '
+              'AndroidMediaButtonType or AndroidCustomMediaButton');
+          return null;
+        }
+      }).toList();
 
       await audioMethodChannel.invokeMethod<dynamic>(setAndroidMediaButtonsMethod, <String, dynamic>{mediaButtonsKey: androidMediaButtonsData, mediaCompactIndicesKey: androidCompactIndices});
     } on PlatformException catch (e) {
@@ -344,8 +342,12 @@ class AudioSystem {
       mediaCustom: MediaActionType.custom
     };
 
-    final String mediaEventTypeString = arguments[mediaEventTypeKey];
-    final MediaActionType type = stringToMediaActionType[mediaEventTypeString];
+    final String? mediaEventTypeString = arguments[mediaEventTypeKey];
+    if (mediaEventTypeString == null) {
+      _logger.severe('[arguments] did not contain value for [mediaEventTypeKey]');
+      return;
+    }
+    final MediaActionType? type = stringToMediaActionType[mediaEventTypeString];
     if (type == null) {
       _logger.severe('Unknown MediaActionType for string $mediaEventTypeString');
       return;
