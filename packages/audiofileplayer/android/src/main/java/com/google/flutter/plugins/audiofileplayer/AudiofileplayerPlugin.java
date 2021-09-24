@@ -12,7 +12,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.os.Bundle;
-import android.os.RemoteException;
 import android.support.v4.media.MediaBrowserCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
@@ -516,7 +515,8 @@ public class AudiofileplayerPlugin
             mediaController.registerCallback(controllerCallback);
             AudiofileplayerService.instance.setPendingIntentActivity(activity);
             AudiofileplayerService.instance.setListener(AudiofileplayerPlugin.this);
-          } catch (RemoteException e) {
+          } catch (IllegalStateException e) {
+            Log.e(TAG, "ConnectionCallback.onConnected Failure", e);
             throw new RuntimeException(e);
           }
         }
