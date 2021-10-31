@@ -62,10 +62,9 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     super.onCreate();
     Log.i(TAG, "onCreate");
     instance = this;
-    val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON);
-    val pendingItent = PendingIntent.getBroadcast(
-            baseContext,
-            0, mediaButtonIntent,
+    PendingIntent pendingItent = PendingIntent.getBroadcast(
+            getApplicationContext(),
+            0, new Intent(Intent.ACTION_MEDIA_BUTTON),
             PendingIntent.FLAG_IMMUTABLE
     );
 
@@ -283,7 +282,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
         .setContentIntent(mediaSession.getController().getSessionActivity())
         // Stop the service when the notification is swiped away
         .setDeleteIntent(
-            MediaButtonReceiver.buildMediaButtonPendingIntent(
+            MediaButtonReceiver12.buildMediaButtonPendingIntent(
                 this, PlaybackStateCompat.ACTION_STOP))
         // Make the transport controls visible on the lockscreen
         .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -294,7 +293,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
                 .setShowActionsInCompactView(compactNotificationActionIndices)
                 .setShowCancelButton(true)
                 .setCancelButtonIntent(
-                    MediaButtonReceiver.buildMediaButtonPendingIntent(
+                    MediaButtonReceiver12.buildMediaButtonPendingIntent(
                         this, PlaybackStateCompat.ACTION_STOP)));
 
     // Add the actions specified by the client.

@@ -620,43 +620,43 @@ public class AudiofileplayerPlugin
         return new NotificationCompat.Action(
             R.drawable.ic_pause_black_36dp,
             context.getString(R.string.pause),
-            MediaButtonReceiver.buildMediaButtonPendingIntent(
+            MediaButtonReceiver12.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_PAUSE));
       case MEDIA_PLAY:
         return new NotificationCompat.Action(
             R.drawable.ic_play_arrow_black_36dp,
             context.getString(R.string.play),
-            MediaButtonReceiver.buildMediaButtonPendingIntent(
+            MediaButtonReceiver12.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_PLAY));
       case MEDIA_STOP:
         return new NotificationCompat.Action(
             R.drawable.ic_stop_black_36dp,
             context.getString(R.string.stop),
-            MediaButtonReceiver.buildMediaButtonPendingIntent(
+            MediaButtonReceiver12.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_STOP));
       case MEDIA_NEXT:
         return new NotificationCompat.Action(
             R.drawable.ic_skip_next_black_36dp,
             context.getString(R.string.skipForward),
-            MediaButtonReceiver.buildMediaButtonPendingIntent(
+            MediaButtonReceiver12.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_SKIP_TO_NEXT));
       case MEDIA_PREVIOUS:
         return new NotificationCompat.Action(
             R.drawable.ic_skip_previous_black_36dp,
             context.getString(R.string.skipBackward),
-            MediaButtonReceiver.buildMediaButtonPendingIntent(
+            MediaButtonReceiver12.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS));
       case MEDIA_SEEK_FORWARD:
         return new NotificationCompat.Action(
             R.drawable.ic_fast_forward_black_36dp,
             context.getString(R.string.seekForward),
-            MediaButtonReceiver.buildMediaButtonPendingIntent(
+            MediaButtonReceiver12.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_FAST_FORWARD));
       case MEDIA_SEEK_BACKWARD:
         return new NotificationCompat.Action(
             R.drawable.ic_fast_rewind_black_36dp,
             context.getString(R.string.seekBackward),
-            MediaButtonReceiver.buildMediaButtonPendingIntent(
+            MediaButtonReceiver12.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_REWIND));
       default:
         Log.e(TAG, "unsupported mediaButtonType:" + mediaButtonType);
@@ -676,18 +676,9 @@ public class AudiofileplayerPlugin
     Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
     intent.setComponent(component);
     intent.putExtra(CUSTOM_MEDIA_BUTTON_EXTRA_KEY, eventId);
-    PendingIntent pendingIntent = null;
-    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-      pendingIntent =
-              PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
-    }
-    else
-    {
-      pendingIntent =
-              PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-    }
-//    PendingIntent pendingIntent =
-//        PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+    PendingIntent pendingIntent =
+        PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
 
     return new NotificationCompat.Action(resourceId, title, pendingIntent);
   }
