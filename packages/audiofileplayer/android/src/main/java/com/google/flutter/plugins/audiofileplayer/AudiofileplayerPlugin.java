@@ -676,8 +676,18 @@ public class AudiofileplayerPlugin
     Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
     intent.setComponent(component);
     intent.putExtra(CUSTOM_MEDIA_BUTTON_EXTRA_KEY, eventId);
-    PendingIntent pendingIntent =
-        PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+    PendingIntent pendingIntent = null;
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+      pendingIntent =
+              PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+    }
+    else
+    {
+      pendingIntent =
+              PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+    }
+//    PendingIntent pendingIntent =
+//        PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
     return new NotificationCompat.Action(resourceId, title, pendingIntent);
   }

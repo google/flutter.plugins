@@ -62,8 +62,14 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     super.onCreate();
     Log.i(TAG, "onCreate");
     instance = this;
+    val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON)
+    val pendingItent = PendingIntent.getBroadcast(
+            baseContext,
+            0, mediaButtonIntent,
+            PendingIntent.FLAG_IMMUTABLE
+    )
 
-    mediaSession = new MediaSessionCompat(this, TAG);
+    mediaSession = new MediaSessionCompat(this, TAG,null,pendingItent);
     mediaSession.setFlags(
         MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
             | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
