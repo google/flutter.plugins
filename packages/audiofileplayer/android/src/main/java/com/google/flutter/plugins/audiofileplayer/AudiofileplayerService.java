@@ -136,8 +136,14 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
   public void setPendingIntentActivity(Activity activity) {
     Context context = activity.getApplicationContext();
     Intent intent = new Intent(context, activity.getClass());
-    PendingIntent pendingIntent =
-        PendingIntent.getActivity(context, 99, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    PendingIntent pendingIntent = null;
+    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+      pendingIntent = PendingIntent.getActivity(context, 99, intent, PendingIntent.FLAG_IMMUTABLE);
+    }
+    else
+    {
+      pendingIntent = PendingIntent.getActivity(context, 99, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
     mediaSession.setSessionActivity(pendingIntent);
   }
 
