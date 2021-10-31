@@ -67,7 +67,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
             baseContext,
             0, mediaButtonIntent,
             PendingIntent.FLAG_IMMUTABLE
-    )
+    );
 
     mediaSession = new MediaSessionCompat(this, TAG,null,pendingItent);
     mediaSession.setFlags(
