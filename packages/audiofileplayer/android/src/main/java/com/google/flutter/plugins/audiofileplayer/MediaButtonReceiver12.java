@@ -12,7 +12,7 @@ import android.view.KeyEvent;
 
 import java.util.List;
 
-public class MediaButtonReceiver12 extends androidx.media.session.MediaButtonReceiver{
+public class MediaButtonReceiver12{
 
     public static ComponentName getMediaButtonReceiverComponent(Context context) {
         Intent queryIntent = new Intent("android.intent.action.MEDIA_BUTTON");
