@@ -62,7 +62,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     super.onCreate();
     Log.i(TAG, "onCreate");
     instance = this;
-    val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON)
+    val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON);
     val pendingItent = PendingIntent.getBroadcast(
             baseContext,
             0, mediaButtonIntent,
