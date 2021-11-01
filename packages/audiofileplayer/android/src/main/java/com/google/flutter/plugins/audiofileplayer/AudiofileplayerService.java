@@ -62,8 +62,13 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     super.onCreate();
     Log.i(TAG, "onCreate");
     instance = this;
+    PendingIntent pendingItent = PendingIntent.getBroadcast(
+            getApplicationContext(),
+            0, new Intent(Intent.ACTION_MEDIA_BUTTON),
+            PendingIntent.FLAG_IMMUTABLE
+    );
 
-    mediaSession = new MediaSessionCompat(this, TAG);
+    mediaSession = new MediaSessionCompat(this, TAG, null, pendingItent);
     mediaSession.setFlags(
         MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
             | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
@@ -137,7 +142,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     Context context = activity.getApplicationContext();
     Intent intent = new Intent(context, activity.getClass());
     PendingIntent pendingIntent =
-        PendingIntent.getActivity(context, 99, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent.getActivity(context, 99, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
     mediaSession.setSessionActivity(pendingIntent);
   }
 

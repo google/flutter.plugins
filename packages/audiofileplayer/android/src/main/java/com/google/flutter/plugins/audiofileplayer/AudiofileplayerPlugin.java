@@ -509,16 +509,12 @@ public class AudiofileplayerPlugin
         @Override
         public void onConnected() {
           Log.i(TAG, "ConnectionCallback.onConnected");
-          try {
-            MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
-            mediaController = new MediaControllerCompat(activity, token);
-            MediaControllerCompat.setMediaController(activity, mediaController);
-            mediaController.registerCallback(controllerCallback);
-            AudiofileplayerService.instance.setPendingIntentActivity(activity);
-            AudiofileplayerService.instance.setListener(AudiofileplayerPlugin.this);
-          } catch (RemoteException e) {
-            throw new RuntimeException(e);
-          }
+          MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
+          mediaController = new MediaControllerCompat(activity, token);
+          MediaControllerCompat.setMediaController(activity, mediaController);
+          mediaController.registerCallback(controllerCallback);
+          AudiofileplayerService.instance.setPendingIntentActivity(activity);
+          AudiofileplayerService.instance.setListener(AudiofileplayerPlugin.this);
         }
 
         @Override
@@ -676,8 +672,9 @@ public class AudiofileplayerPlugin
     Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON);
     intent.setComponent(component);
     intent.putExtra(CUSTOM_MEDIA_BUTTON_EXTRA_KEY, eventId);
+
     PendingIntent pendingIntent =
-        PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_CANCEL_CURRENT);
 
     return new NotificationCompat.Action(resourceId, title, pendingIntent);
   }
