@@ -9,12 +9,11 @@ import android.content.pm.ResolveInfo;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.KeyEvent;
-
 import java.util.List;
 
-public class MediaButtonReceiver12{
+public class MediaButtonReceiver12 {
 
-    public static ComponentName getMediaButtonReceiverComponent(Context context) {
+    private static ComponentName getMediaButtonReceiverComponent(Context context) {
         Intent queryIntent = new Intent("android.intent.action.MEDIA_BUTTON");
         queryIntent.setPackage(context.getPackageName());
         PackageManager pm = context.getPackageManager();

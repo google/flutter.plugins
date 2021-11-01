@@ -620,43 +620,43 @@ public class AudiofileplayerPlugin
         return new NotificationCompat.Action(
             R.drawable.ic_pause_black_36dp,
             context.getString(R.string.pause),
-            MediaButtonReceiver12.buildMediaButtonPendingIntent(
+            MediaButtonReceiver.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_PAUSE));
       case MEDIA_PLAY:
         return new NotificationCompat.Action(
             R.drawable.ic_play_arrow_black_36dp,
             context.getString(R.string.play),
-            MediaButtonReceiver12.buildMediaButtonPendingIntent(
+            MediaButtonReceiver.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_PLAY));
       case MEDIA_STOP:
         return new NotificationCompat.Action(
             R.drawable.ic_stop_black_36dp,
             context.getString(R.string.stop),
-            MediaButtonReceiver12.buildMediaButtonPendingIntent(
+            MediaButtonReceiver.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_STOP));
       case MEDIA_NEXT:
         return new NotificationCompat.Action(
             R.drawable.ic_skip_next_black_36dp,
             context.getString(R.string.skipForward),
-            MediaButtonReceiver12.buildMediaButtonPendingIntent(
+            MediaButtonReceiver.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_SKIP_TO_NEXT));
       case MEDIA_PREVIOUS:
         return new NotificationCompat.Action(
             R.drawable.ic_skip_previous_black_36dp,
             context.getString(R.string.skipBackward),
-            MediaButtonReceiver12.buildMediaButtonPendingIntent(
+            MediaButtonReceiver.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS));
       case MEDIA_SEEK_FORWARD:
         return new NotificationCompat.Action(
             R.drawable.ic_fast_forward_black_36dp,
             context.getString(R.string.seekForward),
-            MediaButtonReceiver12.buildMediaButtonPendingIntent(
+            MediaButtonReceiver.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_FAST_FORWARD));
       case MEDIA_SEEK_BACKWARD:
         return new NotificationCompat.Action(
             R.drawable.ic_fast_rewind_black_36dp,
             context.getString(R.string.seekBackward),
-            MediaButtonReceiver12.buildMediaButtonPendingIntent(
+            MediaButtonReceiver.buildMediaButtonPendingIntent(
                 context, PlaybackStateCompat.ACTION_REWIND));
       default:
         Log.e(TAG, "unsupported mediaButtonType:" + mediaButtonType);

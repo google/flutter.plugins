@@ -68,7 +68,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
             PendingIntent.FLAG_IMMUTABLE
     );
 
-    mediaSession = new MediaSessionCompat(this, TAG,null,pendingItent);
+    mediaSession = new MediaSessionCompat(this, TAG, null, pendingItent);
     mediaSession.setFlags(
         MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
             | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
@@ -141,14 +141,8 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
   public void setPendingIntentActivity(Activity activity) {
     Context context = activity.getApplicationContext();
     Intent intent = new Intent(context, activity.getClass());
-    PendingIntent pendingIntent = null;
-    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-      pendingIntent = PendingIntent.getActivity(context, 99, intent, PendingIntent.FLAG_IMMUTABLE);
-    }
-    else
-    {
-      pendingIntent = PendingIntent.getActivity(context, 99, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-    }
+    PendingIntent pendingIntent =
+            PendingIntent.getActivity(context, 99, intent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
     mediaSession.setSessionActivity(pendingIntent);
   }
 
@@ -282,7 +276,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
         .setContentIntent(mediaSession.getController().getSessionActivity())
         // Stop the service when the notification is swiped away
         .setDeleteIntent(
-            MediaButtonReceiver12.buildMediaButtonPendingIntent(
+            MediaButtonReceiver.buildMediaButtonPendingIntent(
                 this, PlaybackStateCompat.ACTION_STOP))
         // Make the transport controls visible on the lockscreen
         .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -293,7 +287,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
                 .setShowActionsInCompactView(compactNotificationActionIndices)
                 .setShowCancelButton(true)
                 .setCancelButtonIntent(
-                    MediaButtonReceiver12.buildMediaButtonPendingIntent(
+                    MediaButtonReceiver.buildMediaButtonPendingIntent(
                         this, PlaybackStateCompat.ACTION_STOP)));
 
     // Add the actions specified by the client.
