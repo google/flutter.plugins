@@ -509,16 +509,12 @@ public class AudiofileplayerPlugin
         @Override
         public void onConnected() {
           Log.i(TAG, "ConnectionCallback.onConnected");
-          try {
-            MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
-            mediaController = new MediaControllerCompat(activity, token);
-            MediaControllerCompat.setMediaController(activity, mediaController);
-            mediaController.registerCallback(controllerCallback);
-            AudiofileplayerService.instance.setPendingIntentActivity(activity);
-            AudiofileplayerService.instance.setListener(AudiofileplayerPlugin.this);
-          } catch (RemoteException e) {
-            throw new RuntimeException(e);
-          }
+          MediaSessionCompat.Token token = mediaBrowser.getSessionToken();
+          mediaController = new MediaControllerCompat(activity, token);
+          MediaControllerCompat.setMediaController(activity, mediaController);
+          mediaController.registerCallback(controllerCallback);
+          AudiofileplayerService.instance.setPendingIntentActivity(activity);
+          AudiofileplayerService.instance.setListener(AudiofileplayerPlugin.this);
         }
 
         @Override
