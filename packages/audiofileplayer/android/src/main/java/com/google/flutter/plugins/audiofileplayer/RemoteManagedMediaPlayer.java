@@ -111,9 +111,12 @@ class RemoteManagedMediaPlayer extends ManagedMediaPlayer
     }
   }
 
-  @Override
-  public boolean onError(MediaPlayer mp, int what, int extra) {
-    onRemoteLoadListener.onRemoteLoadComplete(false);
-    return super.onError(mp, what, extra);
+  @Override public boolean onError(MediaPlayer mp, int what, int extra) {
+    try {
+      onRemoteLoadListener.onRemoteLoadComplete(false);
+    } catch(Exception e) {
+
+    }
+   return super.onError(mp, what, extra);
   }
 }

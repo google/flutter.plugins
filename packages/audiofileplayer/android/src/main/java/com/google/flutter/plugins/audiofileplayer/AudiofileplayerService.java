@@ -57,6 +57,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     void onSeekTo(long positionMs);
   }
 
+
   @Override
   public void onCreate() {
     super.onCreate();
@@ -79,15 +80,44 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
 
     mediaSessionCallback = new MediaSessionCallback(); // Do i need this as ivar?
     mediaSession.setCallback(mediaSessionCallback);
-
     setSessionToken(mediaSession.getSessionToken());
+
+   // Notification notif = buildNotification();
+
+
+ /* if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      // Display the notification and place the service in the foreground
+      //startForeground(NOTIFICATION_ID, notif);
+      String CHANNEL_ID = "GentleBirth";
+      NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+              "GentleBirth", NotificationManager.IMPORTANCE_NONE);
+      ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+      Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+              .setSmallIcon(getSmallIconId())
+              .setContentTitle("The app is running")
+              .setContentText("This ensures a better experience for you with GentleBirth.").build();
+
+      startForeground(11241223, notification);
+    } */
+/*    if (Build.VERSION.SDK_INT >= 26) {
+      String CHANNEL_ID = "GentleBirth";
+      NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
+              "GentleBirth", NotificationManager.IMPORTANCE_DEFAULT);
+      ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).createNotificationChannel(channel);
+      Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+              .setContentTitle("")
+              .setContentText("").build();
+      startForeground(1, notification);
+    }*/
   }
+  
 
   @Override
   public BrowserRoot onGetRoot(String clientPackageName, int clientUid, Bundle rootHints) {
     Log.i(TAG, "onGetRoot");
     return new BrowserRoot(MEDIA_ROOT_ID, null);
   }
+
 
   @Override
   public void onLoadChildren(
@@ -99,6 +129,14 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
   @Override
   public int onStartCommand(final Intent intent, int flags, int startId) {
     Log.i(TAG, "onStartCommand");
+    
+     Notification notif = buildNotification();
+    // Display the notification and place the service in the foreground
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      startForeground(NOTIFICATION_ID, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+    } else {
+      startForeground(NOTIFICATION_ID, notif);
+    }
     if (intent != null) {
       if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())
           && intent.hasExtra(AudiofileplayerPlugin.CUSTOM_MEDIA_BUTTON_EXTRA_KEY)) {
@@ -112,7 +150,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
         }
       }
     }
-    return super.onStartCommand(intent, flags, startId);
+    return START_NOT_STICKY;
   }
 
   @Override
@@ -126,8 +164,11 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
   @Override
   public void onTaskRemoved(Intent rootIntent) {
     Log.i(TAG, "onTaskRemoved");
-    stopForeground(true);
-    stopSelf();
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      stopForeground(true);
+    } else {
+      stopSelf();
+    }
     super.onTaskRemoved(rootIntent);
   }
 
@@ -213,7 +254,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
 
   private int getSmallIconId() {
     Context context = getApplicationContext();
-    String iconUri = "mipmap/ic_launcher";
+    String iconUri = "mipmap/notilogo72x72";
 
     try {
       ApplicationInfo ai =
@@ -284,7 +325,6 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
         .setStyle(
             new MediaStyle()
                 .setMediaSession(mediaSession.getSessionToken())
-                .setShowActionsInCompactView(compactNotificationActionIndices)
                 .setShowCancelButton(true)
                 .setCancelButtonIntent(
                     MediaButtonReceiver.buildMediaButtonPendingIntent(
@@ -317,8 +357,10 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
 
   public class MediaSessionCallback extends MediaSessionCompat.Callback {
     @Override
+
     public void onPlay() {
       Log.i(TAG, "MediaSessionCallback.onPlay");
+
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         startForegroundService(
             new Intent(AudiofileplayerService.this, AudiofileplayerService.class));
@@ -327,13 +369,7 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
       }
 
       if (!mediaSession.isActive()) mediaSession.setActive(true);
-      Notification notif = buildNotification();
-      // Display the notification and place the service in the foreground
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        startForeground(NOTIFICATION_ID, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
-      } else {
-        startForeground(NOTIFICATION_ID, notif);
-      }
+
     }
 
     @Override
