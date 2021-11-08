@@ -1,3 +1,7 @@
+## 2.1.0 - 08 Nov 2021
+  * Android service: move startForeground into onStartCommand
+  * Android S fixes for PendingIntent
+
 ## 2.0.1 - 27 May 2021
   * Fix null safety bugs with platform media buttons.
   * Update example app to null safety.
