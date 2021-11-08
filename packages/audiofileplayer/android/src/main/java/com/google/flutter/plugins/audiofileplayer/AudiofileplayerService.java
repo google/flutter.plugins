@@ -99,6 +99,16 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
   @Override
   public int onStartCommand(final Intent intent, int flags, int startId) {
     Log.i(TAG, "onStartCommand");
+
+
+    Notification notif = buildNotification();
+    // Display the notification and place the service in the foreground
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      startForeground(NOTIFICATION_ID, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+    } else {
+      startForeground(NOTIFICATION_ID, notif);
+    }
+
     if (intent != null) {
       if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())
           && intent.hasExtra(AudiofileplayerPlugin.CUSTOM_MEDIA_BUTTON_EXTRA_KEY)) {
@@ -327,13 +337,6 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
       }
 
       if (!mediaSession.isActive()) mediaSession.setActive(true);
-      Notification notif = buildNotification();
-      // Display the notification and place the service in the foreground
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        startForeground(NOTIFICATION_ID, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
-      } else {
-        startForeground(NOTIFICATION_ID, notif);
-      }
     }
 
     @Override
