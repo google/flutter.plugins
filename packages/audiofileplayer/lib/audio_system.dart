@@ -15,6 +15,7 @@ const String setAndroidMediaButtonsMethod = 'setAndroidMediaButtons';
 const String mediaButtonsKey = 'mediaButtons';
 const String mediaCompactIndicesKey = 'mediaCompactIndices';
 const String stopBackgroundDisplayMethod = 'stopBackgroundDisplay';
+const String hideBackgroundDisplayMethod = 'hideBackgroundDisplay';
 
 // Constants for iOS category.
 const String iosAudioCategoryMethod = 'iosAudioCategory';
@@ -22,6 +23,7 @@ const String iosAudioCategoryKey = 'iosAudioCategory';
 const String iosAudioCategoryAmbientSolo = 'iosAudioCategoryAmbientSolo';
 const String iosAudioCategoryAmbientMixed = 'iosAudioCategoryAmbientMixed';
 const String iosAudioCategoryPlayback = 'iosAudioCategoryPlayback';
+const String iosAudioCategoryPlayAndRecord = 'iosAudioCategoryPlayAndRecord';
 
 // Constants for [setPlaybackState].
 const String setPlaybackStateMethod = 'setPlaybackState';
@@ -62,7 +64,10 @@ enum IosAudioCategory {
   /// with other apps' audio.
   ///
   /// The default value.
-  playback
+  playback,
+
+  /*! Use this category when recording and playing back audio. */
+  playAndRecord,
 }
 
 /// A button to be added to the Android notification display via
@@ -85,8 +90,7 @@ enum AndroidMediaButtonType {
 /// A custom button to be added to the Android notification display via
 /// [setAndroidMediaButtons].
 class AndroidCustomMediaButton {
-  const AndroidCustomMediaButton(
-      this.title, this.eventId, this.drawableResource);
+  const AndroidCustomMediaButton(this.title, this.eventId, this.drawableResource);
 
   final String title;
 
@@ -133,14 +137,11 @@ class AudioSystem {
   static AudioSystem get instance => _instance;
 
   /// Send media events to the client for handling.
-  final Set<ValueChanged<MediaEvent>> _mediaEventListeners =
-      <ValueChanged<MediaEvent>>{};
+  final Set<ValueChanged<MediaEvent>> _mediaEventListeners = <ValueChanged<MediaEvent>>{};
 
-  void addMediaEventListener(ValueChanged<MediaEvent> listener) =>
-      _mediaEventListeners.add(listener);
+  void addMediaEventListener(ValueChanged<MediaEvent> listener) => _mediaEventListeners.add(listener);
 
-  void removeMediaEventListener(ValueChanged<MediaEvent> listener) =>
-      _mediaEventListeners.remove(listener);
+  void removeMediaEventListener(ValueChanged<MediaEvent> listener) => _mediaEventListeners.remove(listener);
 
   /// Inform the OS's background audio system about the playback state; used to
   /// set the progress bar in lockscreen/notification.
@@ -151,11 +152,7 @@ class AudioSystem {
   /// every second).
   void setPlaybackState(bool isPlaying, double positionSeconds) async {
     try {
-      await audioMethodChannel.invokeMethod<dynamic>(
-          setPlaybackStateMethod, <String, dynamic>{
-        playbackIsPlayingKey: isPlaying,
-        playbackPositionSeconds: positionSeconds
-      });
+      await audioMethodChannel.invokeMethod<dynamic>(setPlaybackStateMethod, <String, dynamic>{playbackIsPlayingKey: isPlaying, playbackPositionSeconds: positionSeconds});
     } on PlatformException catch (e) {
       _logger.severe('setPlaybackState error, category: ', e);
     }
@@ -192,8 +189,7 @@ class AudioSystem {
         metadataMap[metadataArtBytesKey] = metadata.artBytes;
       }
 
-      await audioMethodChannel.invokeMethod<dynamic>(
-          setMetadataMethod, metadataMap);
+      await audioMethodChannel.invokeMethod<dynamic>(setMetadataMethod, metadataMap);
     } on PlatformException catch (e) {
       _logger.severe('setMetadata error, category: ', e);
     }
@@ -203,10 +199,8 @@ class AudioSystem {
   ///
   /// Informs device displays and external controllers (e.g. watch/auto) on
   /// what controls to display.
-  void setSupportedMediaActions(Set<MediaActionType> actions,
-      {double? skipIntervalSeconds}) async {
-    const Map<MediaActionType, String> mediaActionTypeToString =
-        <MediaActionType, String>{
+  void setSupportedMediaActions(Set<MediaActionType> actions, {double? skipIntervalSeconds}) async {
+    const Map<MediaActionType, String> mediaActionTypeToString = <MediaActionType, String>{
       MediaActionType.playPause: mediaPlayPause,
       MediaActionType.pause: mediaPause,
       MediaActionType.play: mediaPlay,
@@ -219,19 +213,15 @@ class AudioSystem {
       MediaActionType.skipBackward: mediaSkipBackward,
     };
 
-    final List<String> actionStrings = actions
-        .map((MediaActionType type) => mediaActionTypeToString[type]!).toList();
+    final List<String> actionStrings = actions.map((MediaActionType type) => mediaActionTypeToString[type]!).toList();
 
-    final Map<String, dynamic> map = <String, dynamic>{
-      mediaActionsKey: actionStrings
-    };
+    final Map<String, dynamic> map = <String, dynamic>{mediaActionsKey: actionStrings};
 
     if (skipIntervalSeconds != null) {
       map[mediaSkipIntervalSecondsKey] = skipIntervalSeconds;
     }
 
-    await audioMethodChannel.invokeMethod<dynamic>(
-        setSupportedMediaActionsMethod, map);
+    await audioMethodChannel.invokeMethod<dynamic>(setSupportedMediaActionsMethod, map);
   }
 
   /// Specify buttons for display in the Android notification.
@@ -244,10 +234,8 @@ class AudioSystem {
   /// of three.
   ///
   /// Only supported on Android; no-op otherwise.
-  void setAndroidNotificationButtons(List<dynamic> androidMediaButtons,
-      {List<int>? androidCompactIndices}) async {
-    const Map<AndroidMediaButtonType, String> androidMediaButtonTypeToString =
-        <AndroidMediaButtonType, String>{
+  void setAndroidNotificationButtons(List<dynamic> androidMediaButtons, {List<int>? androidCompactIndices}) async {
+    const Map<AndroidMediaButtonType, String> androidMediaButtonTypeToString = <AndroidMediaButtonType, String>{
       AndroidMediaButtonType.stop: mediaStop,
       AndroidMediaButtonType.pause: mediaPause,
       AndroidMediaButtonType.play: mediaPlay,
@@ -260,14 +248,12 @@ class AudioSystem {
     if (!Platform.isAndroid) return;
 
     try {
-      final List<dynamic> androidMediaButtonsData =
-          androidMediaButtons.map((dynamic buttonTypeOrCustomButton) {
+      final List<dynamic> androidMediaButtonsData = androidMediaButtons.map((dynamic buttonTypeOrCustomButton) {
         if (buttonTypeOrCustomButton is AndroidMediaButtonType) {
           final AndroidMediaButtonType buttonType = buttonTypeOrCustomButton;
           return androidMediaButtonTypeToString[buttonType];
         } else if (buttonTypeOrCustomButton is AndroidCustomMediaButton) {
-          final AndroidCustomMediaButton customMediaButton =
-              buttonTypeOrCustomButton;
+          final AndroidCustomMediaButton customMediaButton = buttonTypeOrCustomButton;
           return <String, String>{
             mediaCustomTitleKey: customMediaButton.title,
             mediaCustomEventIdKey: customMediaButton.eventId,
@@ -280,11 +266,7 @@ class AudioSystem {
         }
       }).toList();
 
-      await audioMethodChannel.invokeMethod<dynamic>(
-          setAndroidMediaButtonsMethod, <String, dynamic>{
-        mediaButtonsKey: androidMediaButtonsData,
-        mediaCompactIndicesKey: androidCompactIndices
-      });
+      await audioMethodChannel.invokeMethod<dynamic>(setAndroidMediaButtonsMethod, <String, dynamic>{mediaButtonsKey: androidMediaButtonsData, mediaCompactIndicesKey: androidCompactIndices});
     } on PlatformException catch (e) {
       _logger.severe('setAndroidMediaButtonsMethod error', e);
     }
@@ -309,10 +291,19 @@ class AudioSystem {
   /// (and its associated Dart process) active.
   void stopBackgroundDisplay() async {
     try {
-      await audioMethodChannel
-          .invokeMethod<dynamic>(stopBackgroundDisplayMethod);
+      await audioMethodChannel.invokeMethod<dynamic>(stopBackgroundDisplayMethod);
     } on PlatformException catch (e) {
       _logger.severe('stopBackgroundDisplay error', e);
+    }
+  }
+
+  /// this hides the supported controls and metadata from the
+  /// lockscreen/control center.
+  void hideBackgroundDisplay() async {
+    try {
+      await audioMethodChannel.invokeMethod<dynamic>(hideBackgroundDisplayMethod);
+    } on PlatformException catch (e) {
+      _logger.severe('hideBackgroundDisplay error', e);
     }
   }
 
@@ -320,16 +311,15 @@ class AudioSystem {
   ///
   /// Only supported on iOS; no-op otherwise.
   Future<void> setIosAudioCategory(IosAudioCategory category) async {
-    const Map<IosAudioCategory, String> categoryToString =
-        <IosAudioCategory, String>{
+    const Map<IosAudioCategory, String> categoryToString = <IosAudioCategory, String>{
       IosAudioCategory.ambientSolo: iosAudioCategoryAmbientSolo,
       IosAudioCategory.ambientMixed: iosAudioCategoryAmbientMixed,
-      IosAudioCategory.playback: iosAudioCategoryPlayback
+      IosAudioCategory.playback: iosAudioCategoryPlayback,
+      IosAudioCategory.playAndRecord: iosAudioCategoryPlayAndRecord,
     };
     if (!Platform.isIOS) return;
     try {
-      await audioMethodChannel.invokeMethod<dynamic>(iosAudioCategoryMethod,
-          <String, dynamic>{iosAudioCategoryKey: categoryToString[category]});
+      await audioMethodChannel.invokeMethod<dynamic>(iosAudioCategoryMethod, <String, dynamic>{iosAudioCategoryKey: categoryToString[category]});
     } on PlatformException catch (e) {
       _logger.severe('setIosAudioCategory error, category: $category', e);
     }
@@ -337,8 +327,7 @@ class AudioSystem {
 
   /// Handle the [MethodCall]s from the native implementation layer.
   void handleNativeMediaEventCallback(Map<dynamic, dynamic> arguments) {
-    const Map<String, MediaActionType> stringToMediaActionType =
-        <String, MediaActionType>{
+    const Map<String, MediaActionType> stringToMediaActionType = <String, MediaActionType>{
       mediaPause: MediaActionType.pause,
       mediaPlay: MediaActionType.play,
       mediaPlayPause: MediaActionType.playPause,
@@ -355,22 +344,17 @@ class AudioSystem {
 
     final String? mediaEventTypeString = arguments[mediaEventTypeKey];
     if (mediaEventTypeString == null) {
-      _logger
-          .severe('[arguments] did not contain value for [mediaEventTypeKey]');
+      _logger.severe('[arguments] did not contain value for [mediaEventTypeKey]');
       return;
     }
     final MediaActionType? type = stringToMediaActionType[mediaEventTypeString];
     if (type == null) {
-      _logger
-          .severe('Unknown MediaActionType for string $mediaEventTypeString');
+      _logger.severe('Unknown MediaActionType for string $mediaEventTypeString');
       return;
     }
-    final MediaEvent event = MediaEvent(type,
-        customEventId: arguments[mediaCustomEventIdKey],
-        seekToPositionSeconds: arguments[mediaSeekToPositionSecondsKey],
-        skipIntervalSeconds: arguments[mediaSkipIntervalSecondsKey]);
-    for (final ValueChanged<MediaEvent> mediaEventListener
-        in _mediaEventListeners) {
+    final MediaEvent event =
+        MediaEvent(type, customEventId: arguments[mediaCustomEventIdKey], seekToPositionSeconds: arguments[mediaSeekToPositionSecondsKey], skipIntervalSeconds: arguments[mediaSkipIntervalSecondsKey]);
+    for (final ValueChanged<MediaEvent> mediaEventListener in _mediaEventListeners) {
       mediaEventListener(event);
     }
   }
