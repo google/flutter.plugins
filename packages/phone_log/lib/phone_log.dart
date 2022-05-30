@@ -19,14 +19,14 @@ class PhoneLog {
 
   /// Check a [permission] and return a [Future] of the [PermissionStatus].
   Future<PermissionStatus> checkPermission() async {
-    final String status =
+    final String? status =
         await channel.invokeMethod<String>("checkPermission", null);
-    return permissionMap[status];
+    return permissionMap[status] ?? PermissionStatus.deniedAndCannotRequest;
   }
 
   /// Request a [permission] and return a [Future] of bool.
-  Future<bool> requestPermission() async {
-    final bool isGranted =
+  Future<bool?> requestPermission() async {
+    final bool? isGranted =
         await channel.invokeMethod<bool>("requestPermission", null);
     return isGranted;
   }
@@ -35,12 +35,12 @@ class PhoneLog {
   ///
   ///The unit of [startDate] is the Milliseconds of date.
   ///The unit of [duration] is second.
-  Future<Iterable<CallRecord>> getPhoneLogs(
-      {Int64 startDate, Int64 duration}) async {
-    final String _startDate = startDate?.toString();
-    final String _duration = duration?.toString();
+  Future<Iterable<CallRecord>?> getPhoneLogs(
+      {required Int64 startDate, required Int64 duration}) async {
+    final String _startDate = startDate.toString();
+    final String _duration = duration.toString();
 
-    final Iterable<Map<dynamic, dynamic>> records = (await channel
+    final Iterable<Map<dynamic, dynamic>>? records = (await channel
             .invokeMethod<List<dynamic>>('getPhoneLogs', <String, String>{
       "startDate": _startDate,
       "duration": _duration
@@ -51,10 +51,10 @@ class PhoneLog {
   }
 }
 
-Map<String, PermissionStatus> permissionMap = <String, PermissionStatus>{
+final permissionMap = <String?, PermissionStatus>{
   'granted': PermissionStatus.granted,
   'denied': PermissionStatus.denied,
-  'deniedAndCannotRequest': PermissionStatus.deniedAndCannotRequest
+  'deniedAndCannotRequest': PermissionStatus.deniedAndCannotRequest,
 };
 
 /// The class that carries all the data for one call history entry.
@@ -73,18 +73,18 @@ class CallRecord {
   });
 
   CallRecord.fromMap(Map<String, Object> m) {
-    formattedNumber = m['formattedNumber'];
-    number = m['number'];
-    callType = m['callType'];
-    dateYear = m['dateYear'];
-    dateMonth = m['dateMonth'];
-    dateDay = m['dateDay'];
-    dateHour = m['dateHour'];
-    dateMinute = m['dateMinute'];
-    dateSecond = m['dateSecond'];
-    duration = m['duration'];
+    formattedNumber = m['formattedNumber'] as String?;
+    number = m['number'] as String?;
+    callType = m['callType'] as String?;
+    dateYear = m['dateYear'] as int?;
+    dateMonth = m['dateMonth'] as int?;
+    dateDay = m['dateDay'] as int?;
+    dateHour = m['dateHour'] as int?;
+    dateMinute = m['dateMinute'] as int?;
+    dateSecond = m['dateSecond'] as int?;
+    duration = m['duration'] as int?;
   }
 
-  String formattedNumber, number, callType;
-  int dateYear, dateMonth, dateDay, dateHour, dateMinute, dateSecond, duration;
+  String? formattedNumber, number, callType;
+  int? dateYear, dateMonth, dateDay, dateHour, dateMinute, dateSecond, duration;
 }

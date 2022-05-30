@@ -4,17 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:phone_log/phone_log.dart';
 
-typedef Future<dynamic> Handler(MethodCall call);
+typedef Future<dynamic>? Handler(MethodCall call);
 
 void main() {
-  String invokedMethod;
+  String? invokedMethod;
   dynamic arguments;
-  Handler mockChannel;
-  Handler mockChannelForGetLogs;
-  Handler mockChannelForGranted;
-  Handler mockChannelForDenied;
-  Handler mockChannelForDeniedCannotRequest;
-  PhoneLog phoneLog;
+  Handler? mockChannel;
+  Handler? mockChannelForGetLogs;
+  Handler? mockChannelForGranted;
+  Handler? mockChannelForDenied;
+  Handler? mockChannelForDeniedCannotRequest;
+  late PhoneLog phoneLog;
 
   setUp(() {
     mockChannel = (MethodCall call) {
@@ -63,24 +63,25 @@ void main() {
     testWidgets('fetch phone log', (WidgetTester tester) async {
       channel.setMockMethodCallHandler(mockChannelForGetLogs);
 
-      final Iterable<CallRecord> records = await phoneLog.getPhoneLogs(
-          startDate: new Int64(123456789), duration: new Int64(12));
+      final Iterable<CallRecord>? records = await (phoneLog.getPhoneLogs(
+          startDate: new Int64(123456789), duration: new Int64(12)));
+      if (records != null) {
+        print(records);
+        final CallRecord record = records.first;
 
-      print(records);
-      final CallRecord record = records.first;
+        expect(record.formattedNumber, '123 123 1234');
+        expect(record.callType, 'INCOMING_TYPE');
+        expect(record.number, '1231231234');
+        expect(record.dateYear, 2018);
+        expect(record.duration, 123);
 
-      expect(record.formattedNumber, '123 123 1234');
-      expect(record.callType, 'INCOMING_TYPE');
-      expect(record.number, '1231231234');
-      expect(record.dateYear, 2018);
-      expect(record.duration, 123);
-
-      channel.setMockMethodCallHandler(mockChannel);
-      await phoneLog.getPhoneLogs(
-          startDate: new Int64(123456789), duration: new Int64(12));
-      expect(invokedMethod, 'getPhoneLogs');
-      expect(arguments,
-          <String, String>{'startDate': '123456789', 'duration': '12'});
+        channel.setMockMethodCallHandler(mockChannel);
+        await phoneLog.getPhoneLogs(
+            startDate: new Int64(123456789), duration: new Int64(12));
+        expect(invokedMethod, 'getPhoneLogs');
+        expect(arguments,
+            <String, String>{'startDate': '123456789', 'duration': '12'});
+      }
     });
 
     testWidgets('check permission', (WidgetTester tester) async {
@@ -92,19 +93,19 @@ void main() {
       expect(arguments, null);
 
       channel.setMockMethodCallHandler(mockChannelForGranted);
-      final PermissionStatus permissionGranted =
+      final PermissionStatus? permissionGranted =
           await phoneLog.checkPermission();
 
       expect(permissionGranted, PermissionStatus.granted);
 
       channel.setMockMethodCallHandler(mockChannelForDenied);
-      final PermissionStatus permissionDenied =
+      final PermissionStatus? permissionDenied =
           await phoneLog.checkPermission();
 
       expect(permissionDenied, PermissionStatus.denied);
 
       channel.setMockMethodCallHandler(mockChannelForDeniedCannotRequest);
-      final PermissionStatus permissionCannotRequest =
+      final PermissionStatus? permissionCannotRequest =
           await phoneLog.checkPermission();
 
       expect(permissionCannotRequest, PermissionStatus.deniedAndCannotRequest);
