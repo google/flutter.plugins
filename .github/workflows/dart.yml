@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  flutter-analyze:
+    name: flutter analyze, SDK ${{ matrix.flutter_version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        flutter_version: [stable, beta]
+    steps:
+      - uses: actions/checkout@dcd71f646680f2efd8db4afa5ad64fdcba30e748
+      - uses: subosito/flutter-action@d8687e6979e8ef66d2b2970e2c92c1d8e801d7bf
+        with:
+          channel: ${{ matrix.flutter_version }}
+      - run: ./script/incremental_build.sh analyze
+ 
