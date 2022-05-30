@@ -1,16 +1,15 @@
 name: phone_log
 description: A new flutter plugin project.
-version: 0.0.7+1
-author: Jiaming Cheng <jiamingc@google.com>
+version: 0.0.8
 homepage: https://github.com/jiajiabingcheng/phone_log
 
 environment:
-  sdk: ">=2.1.0 <3.0.0"
+  sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  fixnum: ^0.10.7
+  fixnum: ^1.0.1
 
 # The following section is specific to Flutter.
 flutter:
@@ -19,6 +18,6 @@ flutter:
     pluginClass: PhoneLogPlugin
 
 dev_dependencies:
-  mockito: 3.0.0
+  mockito: ^5.2.0
   flutter_test:
     sdk: flutter

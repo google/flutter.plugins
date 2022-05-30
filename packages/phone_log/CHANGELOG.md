@@ -1,3 +1,7 @@
+## 0.0.8
+Roll all dependencies.
+Migrate to null safety.
+
 ## 0.0.7+1
 Removed a `dart:async` import that isn't required for \>=Dart 2.1.
 Require \>=Dart 2.1.
