@@ -12,11 +12,11 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  Iterable<CallRecord> _callRecords;
+  Iterable<CallRecord>? _callRecords;
   final PhoneLog phoneLog = const PhoneLog();
 
   Future<void> fetchCallLogs() async {
-    final Iterable<CallRecord> callLogs = await phoneLog.getPhoneLogs(
+    final Iterable<CallRecord>? callLogs = await phoneLog.getPhoneLogs(
         // startDate: 20180605, duration: 15 seconds
         startDate: new Int64(1525590000000),
         duration: new Int64(13));
@@ -26,7 +26,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void requestPermission() async {
-    final bool res = await phoneLog.requestPermission();
+    final bool? res = await phoneLog.requestPermission();
     print("permission request result is: " + res.toString());
   }
 
@@ -62,9 +62,9 @@ class _MyAppState extends State<MyApp> {
         ),
         new Row(
           children: <Widget>[
-            new Text(call.formattedNumber ?? call.number ?? 'unknow'),
+            new Text(call.formattedNumber ?? call.number ?? 'unknown number'),
             new Padding(
-              child: new Text(call.callType),
+              child: new Text(call.callType ?? 'unknown type'),
               padding: const EdgeInsets.only(left: 8.0),
             ),
           ],

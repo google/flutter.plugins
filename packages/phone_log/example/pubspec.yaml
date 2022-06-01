@@ -2,16 +2,12 @@ name: phone_log_example
 description: Demonstrates how to use the phone_log plugin.
 
 environment:
-  sdk: '>=2.10.0 <3.0.0'
+  sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  fixnum: ^0.10.7
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
-  cupertino_icons: ^0.1.0
+  fixnum: ^1.0.1
 
 dev_dependencies:
   flutter_test:
@@ -25,7 +21,6 @@ dev_dependencies:
 
 # The following section is specific to Flutter.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
