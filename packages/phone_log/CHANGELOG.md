@@ -1,3 +1,10 @@
+## 0.9.0
+Migrate example to null safety.
+
+Cleanup:
+  * Remove unused iOS directories (package is Android-only)
+  * Update stale homepage in pubspec
+
 ## 0.0.8
 Roll all dependencies.
 Migrate to null safety.
