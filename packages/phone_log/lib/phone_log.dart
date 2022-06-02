@@ -51,7 +51,7 @@ class PhoneLog {
   }
 }
 
-final permissionMap = <String?, PermissionStatus>{
+final permissionMap = <String, PermissionStatus>{
   'granted': PermissionStatus.granted,
   'denied': PermissionStatus.denied,
   'deniedAndCannotRequest': PermissionStatus.deniedAndCannotRequest,
