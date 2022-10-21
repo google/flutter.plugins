@@ -62,13 +62,9 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     super.onCreate();
     Log.i(TAG, "onCreate");
     instance = this;
-    PendingIntent pendingItent = PendingIntent.getBroadcast(
-            getApplicationContext(),
-            0, new Intent(Intent.ACTION_MEDIA_BUTTON),
-            PendingIntent.FLAG_IMMUTABLE
-    );
 
-    mediaSession = new MediaSessionCompat(this, TAG, null, pendingItent);
+	// TODO: Migrate to MediaSession, re-add support for hardware buttons via a BroadcastService.
+    mediaSession = new MediaSessionCompat(this, TAG);
     mediaSession.setFlags(
         MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
             | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
