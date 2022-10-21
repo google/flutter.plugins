@@ -1,3 +1,6 @@
+## 2.1.1 - 21 Oct 2022
+  * Fix issue with starting MediaSessionCompat
+
 ## 2.1.0 - 08 Nov 2021
   * Android service: move startForeground into onStartCommand
   * Android S fixes for PendingIntent
