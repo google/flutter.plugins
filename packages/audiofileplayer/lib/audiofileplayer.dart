@@ -245,7 +245,7 @@ class Audio with WidgetsBindingObserver {
         _absolutePath = null,
         _audioBytes = null,
         _remoteUrl = null {
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   Audio._absolutePath(this._absolutePath, this._onComplete, this._onDuration,
@@ -254,7 +254,7 @@ class Audio with WidgetsBindingObserver {
         _path = null,
         _audioBytes = null,
         _remoteUrl = null {
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   Audio._byteData(ByteData byteData, this._onComplete, this._onDuration,
@@ -264,7 +264,7 @@ class Audio with WidgetsBindingObserver {
         _path = null,
         _absolutePath = null,
         _remoteUrl = null {
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   Audio._remoteUrl(this._remoteUrl, this._onComplete, this._onDuration,
@@ -273,7 +273,7 @@ class Audio with WidgetsBindingObserver {
         _audioBytes = null,
         _path = null,
         _absolutePath = null {
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   static final Uuid _uuid = Uuid();
@@ -477,7 +477,7 @@ class Audio with WidgetsBindingObserver {
     // playing) it will be called when playback completes.
     if (!_playing) {
       _usingOnErrorAudios.remove(_audioId);
-      WidgetsBinding.instance!.removeObserver(this);
+      WidgetsBinding.instance.removeObserver(this);
       await _releaseNative(_audioId);
     }
   }
@@ -702,7 +702,7 @@ class Audio with WidgetsBindingObserver {
     if (undisposedAudio == null) {
       // The audio has been disposed, so release native resources.
       _usingOnErrorAudios.remove(audioId);
-      WidgetsBinding.instance!.removeObserver(playingAudio);
+      WidgetsBinding.instance.removeObserver(playingAudio);
       _releaseNative(audioId);
     }
 
