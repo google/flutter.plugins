@@ -63,12 +63,8 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     super.onCreate();
     Log.i(TAG, "onCreate");
     instance = this;
-    PendingIntent pendingItent = PendingIntent.getBroadcast(
-            getApplicationContext(),
-            0, new Intent(Intent.ACTION_MEDIA_BUTTON),
-            PendingIntent.FLAG_IMMUTABLE
-    );
 
+	// TODO: Migrate to MediaSession, re-add support for hardware buttons via a BroadcastService.
     mediaSession = new MediaSessionCompat(this, TAG);
     mediaSession.setFlags(
         MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
@@ -80,7 +76,29 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
 
     mediaSessionCallback = new MediaSessionCallback(); // Do i need this as ivar?
     mediaSession.setCallback(mediaSessionCallback);
+
     setSessionToken(mediaSession.getSessionToken());
+      
+    // Log.i(TAG, "onCreate");
+    // instance = this;
+    // // PendingIntent pendingItent = PendingIntent.getBroadcast(
+    // //         getApplicationContext(),
+    // //         0, new Intent(Intent.ACTION_MEDIA_BUTTON),
+    // //         PendingIntent.FLAG_IMMUTABLE
+    // // );
+
+    // mediaSession = new MediaSessionCompat(this, TAG);
+    // mediaSession.setFlags(
+    //     MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
+    //         | MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+    // PlaybackStateCompat.Builder stateBuilder =
+    //     new PlaybackStateCompat.Builder()
+    //         .setActions(PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PLAY_PAUSE);
+    // mediaSession.setPlaybackState(stateBuilder.build());
+
+    // mediaSessionCallback = new MediaSessionCallback(); // Do i need this as ivar?
+    // mediaSession.setCallback(mediaSessionCallback);
+    // setSessionToken(mediaSession.getSessionToken());
 
    // Notification notif = buildNotification();
 
@@ -126,17 +144,19 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
     result.sendResult(null);
   }
 
-  @Override
+          @Override
   public int onStartCommand(final Intent intent, int flags, int startId) {
     Log.i(TAG, "onStartCommand");
-    
-     Notification notif = buildNotification();
+
+
+    Notification notif = buildNotification();
     // Display the notification and place the service in the foreground
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
       startForeground(NOTIFICATION_ID, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
     } else {
       startForeground(NOTIFICATION_ID, notif);
     }
+
     if (intent != null) {
       if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())
           && intent.hasExtra(AudiofileplayerPlugin.CUSTOM_MEDIA_BUTTON_EXTRA_KEY)) {
@@ -150,8 +170,35 @@ public class AudiofileplayerService extends MediaBrowserServiceCompat
         }
       }
     }
-    return START_NOT_STICKY;
+    return super.onStartCommand(intent, flags, startId);
   }
+        
+  // @Override
+  // public int onStartCommand(final Intent intent, int flags, int startId) {
+  //   Log.i(TAG, "onStartCommand");
+    
+  //    Notification notif = buildNotification();
+  //   // Display the notification and place the service in the foreground
+  //   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+  //     startForeground(NOTIFICATION_ID, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+  //   } else {
+  //     startForeground(NOTIFICATION_ID, notif);
+  //   }
+  //   if (intent != null) {
+  //     if (Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())
+  //         && intent.hasExtra(AudiofileplayerPlugin.CUSTOM_MEDIA_BUTTON_EXTRA_KEY)) {
+  //       // Check for custom button intent.
+  //       handleCustomButtonIntent(intent);
+  //     } else {
+  //       // If there is a KeyEvent in the intent, send it to the MediaButtonReceiver to pass to
+  //       // its callbacks.
+  //       if (mediaSession != null) {
+  //         MediaButtonReceiver.handleIntent(mediaSession, intent);
+  //       }
+  //     }
+  //   }
+  //   return START_NOT_STICKY;
+  // }
 
   @Override
   public void onDestroy() {
